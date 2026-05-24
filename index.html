@@ -3,12 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My App</title>
+    <title>AKAZA — Upper Rank Three | Demon Slayer</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- GSAP & ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Welcome to My App</h1>
-    <p>This is a starter template.</p>
+    <!-- Custom Cursor -->
+    <div class="cursor-glow"></div>
+    <div class="cursor-dot"></div>
+    
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress"></div>
+    
+    <!-- Atmospheric Background -->
+    <div class="atmosphere">
+        <div class="gradient-layer"></div>
+        <div class="noise-overlay"></div>
+        <div class="radial-glow"></div>
+        <canvas id="particle-canvas"></canvas>
+    </div>
+    
+    <!-- Intro Sequence -->
+    <section class="intro-screen">
+        <div class="intro-logo">
+            <h1>鬼滅の刃</h1>
+            <p>DEMON SLAYER</p>
+        </div>
+    </section>
+    
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <div class="nav-logo">AKAZA</div>
+        <div class="nav-indicator"></div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="hero" id="hero">        <div class="hero-content">
+            <div class="hero-title">
+                <h1 class="akaza-title">
+                    <span class="char">A</span>
+                    <span class="char">K</span>
+                    <span class="char">A</span>
+                    <span class="char">Z</span>
+                    <span class="char">A</span>
+                </h1>
+                <div class="subtitle-container">
+                    <p class="subtitle rank">Upper Rank Three</p>
+                    <p class="subtitle art">Destructive Death</p>
+                    <p class="subtitle power">Beyond Human Strength</p>
+                </div>
+            </div>
+            
+            <!-- Floating UI Panels -->
+            <div class="floating-panels">
+                <div class="glass-panel" data-panel="rank">
+                    <div class="panel-glow"></div>
+                    <div class="panel-content">
+                        <span class="panel-label">RANK</span>
+                        <span class="panel-value">上弦の参</span>
+                        <span class="panel-sub">Upper Three</span>
+                    </div>
+                </div>
+                
+                <div class="glass-panel" data-panel="power">
+                    <div class="panel-glow"></div>
+                    <div class="panel-content">
+                        <span class="panel-label">POWER LEVEL</span>
+                        <span class="panel-value">∞</span>
+                        <span class="panel-sub">Immeasurable</span>
+                    </div>
+                </div>
+                
+                <div class="glass-panel" data-panel="combat">
+                    <div class="panel-glow"></div>
+                    <div class="panel-content">
+                        <span class="panel-label">COMBAT TYPE</span>
+                        <span class="panel-value">MARTIAL</span>
+                        <span class="panel-sub">Close Combat</span>
+                    </div>
+                </div>
+                
+                <div class="glass-panel" data-panel="art">
+                    <div class="panel-glow"></div>
+                    <div class="panel-content">
+                        <span class="panel-label">BLOOD DEMON ART</span>
+                        <span class="panel-value">破壊殺</span>                        <span class="panel-sub">Destructive Death</span>
+                    </div>
+                </div>
+                
+                <div class="glass-panel" data-panel="threat">
+                    <div class="panel-glow"></div>
+                    <div class="panel-content">
+                        <span class="panel-label">THREAT RATING</span>
+                        <span class="panel-value">SSS</span>
+                        <span class="panel-sub">Catastrophic</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hero Visual -->
+        <div class="hero-visual">
+            <div class="visual-layer back">
+                <!-- Replace with high-quality Akaza background render -->
+                <div class="placeholder-visual" data-type="background"></div>
+            </div>
+            <div class="visual-layer mid">
+                <!-- Replace with Akaza mid-layer render -->
+                <div class="placeholder-visual" data-type="mid"></div>
+            </div>
+            <div class="visual-layer front">
+                <!-- Replace with Akaza foreground render (eye close-up or half-face) -->
+                <div class="placeholder-visual" data-type="foreground"></div>
+            </div>
+            <div class="energy-rings"></div>
+        </div>
+        
+        <div class="scroll-indicator">
+            <span>SCROLL</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+    
+    <!-- Character Grid Section -->
+    <section class="character-section" id="characters">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span class="title-line">DEMON</span>
+                <span class="title-line">SLAYER</span>
+                <span class="title-line accent">UNIVERSE</span>
+            </h2>
+        </div>
+        
+        <div class="character-grid">
+            <!-- Akaza Card -->            <div class="character-card" data-character="akaza">
+                <div class="card-visual">
+                    <!-- Replace with Akaza character render -->
+                    <div class="card-image" data-character="akaza"></div>
+                    <div class="card-overlay"></div>
+                </div>
+                <div class="card-info">
+                    <h3 class="card-name">AKAZA</h3>
+                    <p class="card-rank">Upper Rank Three</p>
+                    <p class="card-bio">The martial arts demon who seeks only the strongest opponents. His Destructive Death techniques combine precision with devastating power.</p>
+                </div>
+                <div class="card-border-trace"></div>
+            </div>
+            
+            <!-- Rengoku Card -->
+            <div class="character-card" data-character="rengoku">
+                <div class="card-visual">
+                    <!-- Replace with Rengoku character render -->
+                    <div class="card-image" data-character="rengoku"></div>
+                    <div class="card-overlay"></div>
+                </div>
+                <div class="card-info">
+                    <h3 class="card-name">RENGOKU</h3>
+                    <p class="card-rank">Flame Hashira</p>
+                    <p class="card-bio">The Flame Pillar whose burning spirit and unwavering resolve inspired all who witnessed his final stand.</p>
+                </div>
+                <div class="card-border-trace"></div>
+            </div>
+            
+            <!-- Tanjiro Card -->
+            <div class="character-card" data-character="tanjiro">
+                <div class="card-visual">
+                    <!-- Replace with Tanjiro character render -->
+                    <div class="card-image" data-character="tanjiro"></div>
+                    <div class="card-overlay"></div>
+                </div>
+                <div class="card-info">
+                    <h3 class="card-name">TANJIRO</h3>
+                    <p class="card-rank">Demon Slayer</p>
+                    <p class="card-bio">A kind-hearted warrior who fights to save his sister and avenge his family. His Water Breathing techniques flow like a river.</p>
+                </div>
+                <div class="card-border-trace"></div>
+            </div>
+            
+            <!-- Kokushibo Card -->
+            <div class="character-card" data-character="kokushibo">
+                <div class="card-visual">
+                    <!-- Replace with Kokushibo character render -->
+                    <div class="card-image" data-character="kokushibo"></div>
+                    <div class="card-overlay"></div>                </div>
+                <div class="card-info">
+                    <h3 class="card-name">KOKUSHIBO</h3>
+                    <p class="card-rank">Upper Rank One</p>
+                    <p class="card-bio">The strongest demon under Muzan, wielding six swords with Moon Breathing techniques that cut through reality itself.</p>
+                </div>
+                <div class="card-border-trace"></div>
+            </div>
+            
+            <!-- Doma Card -->
+            <div class="character-card" data-character="doma">
+                <div class="card-visual">
+                    <!-- Replace with Doma character render -->
+                    <div class="card-image" data-character="doma"></div>
+                    <div class="card-overlay"></div>
+                </div>
+                <div class="card-info">
+                    <h3 class="card-name">DOMA</h3>
+                    <p class="card-rank">Upper Rank Two</p>
+                    <p class="card-bio">A charismatic demon who hides his cruelty behind a friendly smile. His ice-based Blood Demon Art freezes all in his path.</p>
+                </div>
+                <div class="card-border-trace"></div>
+            </div>
+            
+            <!-- Muzan Card -->
+            <div class="character-card" data-character="muzan">
+                <div class="card-visual">
+                    <!-- Replace with Muzan character render -->
+                    <div class="card-image" data-character="muzan"></div>
+                    <div class="card-overlay"></div>
+                </div>
+                <div class="card-info">
+                    <h3 class="card-name">MUZAN</h3>
+                    <p class="card-rank">Demon King</p>
+                    <p class="card-bio">The progenitor of all demons, seeking perfection and immortality. His power is absolute and his cruelty knows no bounds.</p>
+                </div>
+                <div class="card-border-trace"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Modal -->
+    <div class="modal" id="character-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close modal">
+                <span></span>
+                <span></span>
+            </button>
+            <div class="modal-visual">                <!-- Dynamic character image will be inserted here -->
+            </div>
+            <div class="modal-info">
+                <h2 class="modal-name"></h2>
+                <p class="modal-rank"></p>
+                <div class="modal-divider"></div>
+                <p class="modal-bio"></p>
+                <div class="modal-stats">
+                    <div class="stat">
+                        <span class="stat-label">STRENGTH</span>
+                        <div class="stat-bar">
+                            <div class="stat-fill"></div>
+                        </div>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">SPEED</span>
+                        <div class="stat-bar">
+                            <div class="stat-fill"></div>
+                        </div>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">TECHNIQUE</span>
+                        <div class="stat-bar">
+                            <div class="stat-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-content">
+            <p class="footer-text">AKAZA EXPERIENCE</p>
+            <p class="footer-sub">A cinematic tribute to Demon Slayer</p>
+        </div>
+    </footer>
     
     <script src="script.js"></script>
 </body>
