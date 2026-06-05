@@ -1,287 +1,1156 @@
+```html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AKAZA — Upper Rank Three | Demon Slayer</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- GSAP & ScrollTrigger -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-    
-    <link rel="stylesheet" href="style.css">
+    <title>متاهة الذكاء الاصطناعي - Reinforcement Learning</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1a1a24;
+            --border: #2a2a3a;
+            --text: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent: #6c5ce7;
+            --accent-glow: #8b7cf0;
+            --success: #00d2a0;
+            --danger: #ff5e7a;
+            --warning: #ffb347;
+            --agent-color: #00e5ff;
+            --goal-color: #ffd700;
+            --wall-color: #2d2d44;
+            --path-color: #1c1c2e;
+            --sensor-color: rgba(0, 229, 255, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Segoe UI', 'Cairo', 'Tahoma', sans-serif;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1100px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .game-panel {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .game-panel h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, var(--accent-glow), var(--agent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        canvas {
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            display: block;
+            background: #0d0d18;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6), 0 8px 30px rgba(0, 0, 0, 0.4);
+            image-rendering: auto;
+        }
+
+        .dashboard {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 24px 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            min-width: 260px;
+            max-width: 320px;
+            flex: 1;
+        }
+
+        .dashboard h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, var(--warning), var(--accent-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .stat-card {
+            background: var(--surface2);
+            border-radius: 14px;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(108, 92, 231, 0.15);
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.04);
+            padding: 4px 12px;
+            border-radius: 20px;
+            min-width: 60px;
+            text-align: center;
+        }
+        .stat-value.highlight {
+            color: var(--accent-glow);
+        }
+        .stat-value.success {
+            color: var(--success);
+        }
+        .stat-value.warning {
+            color: var(--warning);
+        }
+        .db-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .db-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #555;
+            transition: background 0.3s;
+        }
+        .db-dot.saved {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+        .db-dot.loading {
+            background: var(--warning);
+            box-shadow: 0 0 10px var(--warning);
+            animation: pulse 0.8s infinite;
+        }
+        .db-dot.error {
+            background: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.4;
+            }
+        }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.25s;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 70px;
+        }
+        button:hover {
+            background: #252535;
+            border-color: var(--accent);
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25);
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: scale(0.96);
+        }
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            font-weight: 700;
+        }
+        button.primary:hover {
+            background: #7d6ff0;
+            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+        }
+        button.danger {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        button.danger:hover {
+            background: rgba(255, 94, 122, 0.15);
+            border-color: var(--danger);
+        }
+        .speed-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid #fff;
+        }
+        .legend {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            justify-content: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        @media (max-width: 750px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+                padding: 12px;
+            }
+            .dashboard {
+                max-width: 100%;
+                width: 100%;
+                min-width: auto;
+            }
+            canvas {
+                width: 100%;
+                height: auto;
+                max-width: 400px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Custom Cursor -->
-    <div class="cursor-glow"></div>
-    <div class="cursor-dot"></div>
-    
-    <!-- Scroll Progress Bar -->
-    <div class="scroll-progress"></div>
-    
-    <!-- Atmospheric Background -->
-    <div class="atmosphere">
-        <div class="gradient-layer"></div>
-        <div class="noise-overlay"></div>
-        <div class="radial-glow"></div>
-        <canvas id="particle-canvas"></canvas>
-    </div>
-    
-    <!-- Intro Sequence -->
-    <section class="intro-screen">
-        <div class="intro-logo">
-            <h1>鬼滅の刃</h1>
-            <p>DEMON SLAYER</p>
-        </div>
-    </section>
-    
-    <!-- Navigation -->
-    <nav class="main-nav">
-        <div class="nav-logo">AKAZA</div>
-        <div class="nav-indicator"></div>
-    </nav>
-    
-    <!-- Hero Section -->
-    <section class="hero" id="hero">        <div class="hero-content">
-            <div class="hero-title">
-                <h1 class="akaza-title">
-                    <span class="char">A</span>
-                    <span class="char">K</span>
-                    <span class="char">A</span>
-                    <span class="char">Z</span>
-                    <span class="char">A</span>
-                </h1>
-                <div class="subtitle-container">
-                    <p class="subtitle rank">Upper Rank Three</p>
-                    <p class="subtitle art">Destructive Death</p>
-                    <p class="subtitle power">Beyond Human Strength</p>
-                </div>
+    <div class="main-container">
+        <!-- Game Panel -->
+        <div class="game-panel">
+            <h2>🧠 المتاهة الذكية</h2>
+            <canvas id="mazeCanvas" width="480" height="480" aria-label="لعبة المتاهة"></canvas>
+            <div class="legend">
+                <span class="legend-item"><span class="legend-dot" style="background:var(--agent-color)"></span> الوكيل</span>
+                <span class="legend-item"><span class="legend-dot" style="background:var(--goal-color)"></span> المخرج</span>
+                <span class="legend-item"><span class="legend-dot" style="background:var(--sensor-color)"></span> المجسات</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#ff5e7a55"></span> جدار متغير</span>
             </div>
-            
-            <!-- Floating UI Panels -->
-            <div class="floating-panels">
-                <div class="glass-panel" data-panel="rank">
-                    <div class="panel-glow"></div>
-                    <div class="panel-content">
-                        <span class="panel-label">RANK</span>
-                        <span class="panel-value">上弦の参</span>
-                        <span class="panel-sub">Upper Three</span>
-                    </div>
-                </div>
-                
-                <div class="glass-panel" data-panel="power">
-                    <div class="panel-glow"></div>
-                    <div class="panel-content">
-                        <span class="panel-label">POWER LEVEL</span>
-                        <span class="panel-value">∞</span>
-                        <span class="panel-sub">Immeasurable</span>
-                    </div>
-                </div>
-                
-                <div class="glass-panel" data-panel="combat">
-                    <div class="panel-glow"></div>
-                    <div class="panel-content">
-                        <span class="panel-label">COMBAT TYPE</span>
-                        <span class="panel-value">MARTIAL</span>
-                        <span class="panel-sub">Close Combat</span>
-                    </div>
-                </div>
-                
-                <div class="glass-panel" data-panel="art">
-                    <div class="panel-glow"></div>
-                    <div class="panel-content">
-                        <span class="panel-label">BLOOD DEMON ART</span>
-                        <span class="panel-value">破壊殺</span>                        <span class="panel-sub">Destructive Death</span>
-                    </div>
-                </div>
-                
-                <div class="glass-panel" data-panel="threat">
-                    <div class="panel-glow"></div>
-                    <div class="panel-content">
-                        <span class="panel-label">THREAT RATING</span>
-                        <span class="panel-value">SSS</span>
-                        <span class="panel-sub">Catastrophic</span>
-                    </div>
-                </div>
+            <div class="btn-group">
+                <button id="btnStartStop" class="primary">▶ ابدأ التدريب</button>
+                <button id="btnReset" class="danger">↺ إعادة ضبط</button>
+            </div>
+            <div class="speed-slider">
+                <span>🐢 بطيء</span>
+                <input type="range" id="speedSlider" min="1" max="30" value="8" step="1">
+                <span>🐇 سريع</span>
             </div>
         </div>
-        
-        <!-- Hero Visual -->
-        <div class="hero-visual">
-            <div class="visual-layer back">
-                <!-- Replace with high-quality Akaza background render -->
-                <div class="placeholder-visual" data-type="background"></div>
+
+        <!-- Dashboard -->
+        <div class="dashboard">
+            <h2>📊 لوحة التحكم</h2>
+            <div class="stat-card">
+                <span class="stat-label">🔁 المحاولة</span>
+                <span class="stat-value highlight" id="episodeNum">0</span>
             </div>
-            <div class="visual-layer mid">
-                <!-- Replace with Akaza mid-layer render -->
-                <div class="placeholder-visual" data-type="mid"></div>
+            <div class="stat-card">
+                <span class="stat-label">🏆 إجمالي الجوائز</span>
+                <span class="stat-value success" id="totalReward">0.00</span>
             </div>
-            <div class="visual-layer front">
-                <!-- Replace with Akaza foreground render (eye close-up or half-face) -->
-                <div class="placeholder-visual" data-type="foreground"></div>
+            <div class="stat-card">
+                <span class="stat-label">📉 معدل الخطأ (Loss)</span>
+                <span class="stat-value warning" id="lossValue">---</span>
             </div>
-            <div class="energy-rings"></div>
-        </div>
-        
-        <div class="scroll-indicator">
-            <span>SCROLL</span>
-            <div class="scroll-line"></div>
-        </div>
-    </section>
-    
-    <!-- Character Grid Section -->
-    <section class="character-section" id="characters">
-        <div class="section-header">
-            <h2 class="section-title">
-                <span class="title-line">DEMON</span>
-                <span class="title-line">SLAYER</span>
-                <span class="title-line accent">UNIVERSE</span>
-            </h2>
-        </div>
-        
-        <div class="character-grid">
-            <!-- Akaza Card -->            <div class="character-card" data-character="akaza">
-                <div class="card-visual">
-                    <!-- Replace with Akaza character render -->
-                    <div class="card-image" data-character="akaza"></div>
-                    <div class="card-overlay"></div>
-                </div>
-                <div class="card-info">
-                    <h3 class="card-name">AKAZA</h3>
-                    <p class="card-rank">Upper Rank Three</p>
-                    <p class="card-bio">The martial arts demon who seeks only the strongest opponents. His Destructive Death techniques combine precision with devastating power.</p>
-                </div>
-                <div class="card-border-trace"></div>
+            <div class="stat-card">
+                <span class="stat-label">✅ نسبة النجاح</span>
+                <span class="stat-value" id="successRate">0%</span>
             </div>
-            
-            <!-- Rengoku Card -->
-            <div class="character-card" data-character="rengoku">
-                <div class="card-visual">
-                    <!-- Replace with Rengoku character render -->
-                    <div class="card-image" data-character="rengoku"></div>
-                    <div class="card-overlay"></div>
-                </div>
-                <div class="card-info">
-                    <h3 class="card-name">RENGOKU</h3>
-                    <p class="card-rank">Flame Hashira</p>
-                    <p class="card-bio">The Flame Pillar whose burning spirit and unwavering resolve inspired all who witnessed his final stand.</p>
-                </div>
-                <div class="card-border-trace"></div>
+            <div class="stat-card">
+                <span class="stat-label">⏱️ الخطوات (الحالية)</span>
+                <span class="stat-value" id="stepCount">0</span>
             </div>
-            
-            <!-- Tanjiro Card -->
-            <div class="character-card" data-character="tanjiro">
-                <div class="card-visual">
-                    <!-- Replace with Tanjiro character render -->
-                    <div class="card-image" data-character="tanjiro"></div>
-                    <div class="card-overlay"></div>
-                </div>
-                <div class="card-info">
-                    <h3 class="card-name">TANJIRO</h3>
-                    <p class="card-rank">Demon Slayer</p>
-                    <p class="card-bio">A kind-hearted warrior who fights to save his sister and avenge his family. His Water Breathing techniques flow like a river.</p>
-                </div>
-                <div class="card-border-trace"></div>
+            <div class="db-status">
+                <span>💾 IndexedDB:</span>
+                <span class="db-dot" id="dbDot"></span>
+                <span id="dbText">غير محفوظ</span>
             </div>
-            
-            <!-- Kokushibo Card -->
-            <div class="character-card" data-character="kokushibo">
-                <div class="card-visual">
-                    <!-- Replace with Kokushibo character render -->
-                    <div class="card-image" data-character="kokushibo"></div>
-                    <div class="card-overlay"></div>                </div>
-                <div class="card-info">
-                    <h3 class="card-name">KOKUSHIBO</h3>
-                    <p class="card-rank">Upper Rank One</p>
-                    <p class="card-bio">The strongest demon under Muzan, wielding six swords with Moon Breathing techniques that cut through reality itself.</p>
-                </div>
-                <div class="card-border-trace"></div>
-            </div>
-            
-            <!-- Doma Card -->
-            <div class="character-card" data-character="doma">
-                <div class="card-visual">
-                    <!-- Replace with Doma character render -->
-                    <div class="card-image" data-character="doma"></div>
-                    <div class="card-overlay"></div>
-                </div>
-                <div class="card-info">
-                    <h3 class="card-name">DOMA</h3>
-                    <p class="card-rank">Upper Rank Two</p>
-                    <p class="card-bio">A charismatic demon who hides his cruelty behind a friendly smile. His ice-based Blood Demon Art freezes all in his path.</p>
-                </div>
-                <div class="card-border-trace"></div>
-            </div>
-            
-            <!-- Muzan Card -->
-            <div class="character-card" data-character="muzan">
-                <div class="card-visual">
-                    <!-- Replace with Muzan character render -->
-                    <div class="card-image" data-character="muzan"></div>
-                    <div class="card-overlay"></div>
-                </div>
-                <div class="card-info">
-                    <h3 class="card-name">MUZAN</h3>
-                    <p class="card-rank">Demon King</p>
-                    <p class="card-bio">The progenitor of all demons, seeking perfection and immortality. His power is absolute and his cruelty knows no bounds.</p>
-                </div>
-                <div class="card-border-trace"></div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Modal -->
-    <div class="modal" id="character-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <button class="modal-close" aria-label="Close modal">
-                <span></span>
-                <span></span>
-            </button>
-            <div class="modal-visual">                <!-- Dynamic character image will be inserted here -->
-            </div>
-            <div class="modal-info">
-                <h2 class="modal-name"></h2>
-                <p class="modal-rank"></p>
-                <div class="modal-divider"></div>
-                <p class="modal-bio"></p>
-                <div class="modal-stats">
-                    <div class="stat">
-                        <span class="stat-label">STRENGTH</span>
-                        <div class="stat-bar">
-                            <div class="stat-fill"></div>
-                        </div>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">SPEED</span>
-                        <div class="stat-bar">
-                            <div class="stat-fill"></div>
-                        </div>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">TECHNIQUE</span>
-                        <div class="stat-bar">
-                            <div class="stat-fill"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <button id="btnSaveWeights">💾 حفظ الأوزان الآن</button>
+            <button id="btnLoadWeights">📂 تحميل الأوزان</button>
+            <button id="btnClearDB">🗑️ مسح التخزين</button>
         </div>
     </div>
-    
-    <!-- Footer -->
-    <footer class="site-footer">
-        <div class="footer-content">
-            <p class="footer-text">AKAZA EXPERIENCE</p>
-            <p class="footer-sub">A cinematic tribute to Demon Slayer</p>
-        </div>
-    </footer>
-    
-    <script src="script.js"></script>
+
+    <script>
+        (function() {
+            // ==================== CONSTANTS ====================
+            const GRID_SIZE = 15;
+            const CELL_SIZE = 480 / GRID_SIZE;
+            const STATE_DIM = 12; // 8 sensors + 2 agent pos + 2 goal pos
+            const ACTION_DIM = 4; // up, down, left, right
+            const HIDDEN1_UNITS = 500;
+            const HIDDEN2_UNITS = 10;
+            const DROPOUT_RATE = 0.2;
+            const LEARNING_RATE = 0.0005;
+            const GAMMA = 0.95; // discount factor
+            const MAX_STEPS_PER_EPISODE = 800;
+            const WALL_CHANGE_INTERVAL_MS = 3000;
+            const DB_NAME = 'MazeRLModelDB';
+            const DB_STORE_NAME = 'model_weights';
+
+            // Directions: up, down, left, right
+            const DIRS = [
+                { dr: -1, dc: 0, name: 'up' },
+                { dr: 1, dc: 0, name: 'down' },
+                { dr: 0, dc: -1, name: 'left' },
+                { dr: 0, dc: 1, name: 'right' }
+            ];
+
+            // 8 sensor directions: N, NE, E, SE, S, SW, W, NW
+            const SENSOR_DIRS = [
+                { dr: -1, dc: 0 },
+                { dr: -1, dc: 1 },
+                { dr: 0, dc: 1 },
+                { dr: 1, dc: 1 },
+                { dr: 1, dc: 0 },
+                { dr: 1, dc: -1 },
+                { dr: 0, dc: -1 },
+                { dr: -1, dc: -1 }
+            ];
+
+            // ==================== DOM ELEMENTS ====================
+            const canvas = document.getElementById('mazeCanvas');
+            const ctx = canvas.getContext('2d');
+            const btnStartStop = document.getElementById('btnStartStop');
+            const btnReset = document.getElementById('btnReset');
+            const speedSlider = document.getElementById('speedSlider');
+            const episodeNumEl = document.getElementById('episodeNum');
+            const totalRewardEl = document.getElementById('totalReward');
+            const lossValueEl = document.getElementById('lossValue');
+            const successRateEl = document.getElementById('successRate');
+            const stepCountEl = document.getElementById('stepCount');
+            const dbDot = document.getElementById('dbDot');
+            const dbText = document.getElementById('dbText');
+            const btnSaveWeights = document.getElementById('btnSaveWeights');
+            const btnLoadWeights = document.getElementById('btnLoadWeights');
+            const btnClearDB = document.getElementById('btnClearDB');
+
+            // ==================== GAME STATE ====================
+            let maze = []; // 15x15, 1=wall, 0=path
+            let agentPos = { r: 0, c: 0 };
+            let goalPos = { r: GRID_SIZE - 1, c: GRID_SIZE - 1 };
+            let episodeCount = 0;
+            let totalRewardAccum = 0;
+            let currentTotalReward = 0;
+            let currentSteps = 0;
+            let lastLoss = null;
+            let successCount = 0;
+            let isRunning = false;
+            let animationId = null;
+            let wallChangeTimer = null;
+            let episodeBuffer = []; // {state, action, reward} for current episode
+            let trainingInProgress = false;
+            let dbReady = false;
+            let modelSavePending = false;
+
+            // ==================== INDEXEDDB ====================
+            function openDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(DB_NAME, 1);
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(DB_STORE_NAME)) {
+                            db.createObjectStore(DB_STORE_NAME);
+                        }
+                    };
+                    request.onsuccess = (event) => {
+                        resolve(event.target.result);
+                    };
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                });
+            }
+
+            async function saveWeightsToDB(model) {
+                try {
+                    const db = await openDB();
+                    const weights = model.getWeights();
+                    const weightData = await Promise.all(weights.map(async (w) => ({
+                        data: Array.from(await w.data()),
+                        shape: w.shape
+                    })));
+                    const tx = db.transaction(DB_STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(DB_STORE_NAME);
+                    store.put({ weights: weightData, timestamp: Date.now() }, 'latest');
+                    await new Promise((resolve, reject) => {
+                        tx.oncomplete = resolve;
+                        tx.onerror = reject;
+                    });
+                    db.close();
+                    updateDBStatus('saved', 'محفوظ ✅');
+                    console.log('✅ Weights saved to IndexedDB');
+                } catch (err) {
+                    console.error('❌ Failed to save weights:', err);
+                    updateDBStatus('error', 'فشل الحفظ');
+                }
+            }
+
+            async function loadWeightsFromDB(model) {
+                try {
+                    const db = await openDB();
+                    const tx = db.transaction(DB_STORE_NAME, 'readonly');
+                    const store = tx.objectStore(DB_STORE_NAME);
+                    const request = store.get('latest');
+                    const result = await new Promise((resolve, reject) => {
+                        request.onsuccess = () => resolve(request.result);
+                        request.onerror = () => reject(request.error);
+                    });
+                    db.close();
+                    if (result && result.weights) {
+                        const tensors = result.weights.map(w => tf.tensor(w.data, w.shape));
+                        model.setWeights(tensors);
+                        tensors.forEach(t => t.dispose());
+                        updateDBStatus('saved', 'تم التحميل ✅');
+                        console.log('✅ Weights loaded from IndexedDB');
+                        return true;
+                    } else {
+                        updateDBStatus('loading', 'لا يوجد حفظ سابق');
+                        return false;
+                    }
+                } catch (err) {
+                    console.error('❌ Failed to load weights:', err);
+                    updateDBStatus('error', 'فشل التحميل');
+                    return false;
+                }
+            }
+
+            async function clearDB() {
+                try {
+                    const db = await openDB();
+                    const tx = db.transaction(DB_STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(DB_STORE_NAME);
+                    store.clear();
+                    await new Promise((resolve, reject) => {
+                        tx.oncomplete = resolve;
+                        tx.onerror = reject;
+                    });
+                    db.close();
+                    updateDBStatus('loading', 'تم المسح');
+                    console.log('🗑️ IndexedDB cleared');
+                } catch (err) {
+                    console.error('Failed to clear DB:', err);
+                }
+            }
+
+            function updateDBStatus(status, text) {
+                dbDot.className = 'db-dot ' + status;
+                dbText.textContent = text;
+                dbReady = (status === 'saved' || status === 'loading');
+            }
+
+            // ==================== NEURAL NETWORK ====================
+            function buildModel() {
+                const input = tf.input({ shape: [STATE_DIM] });
+
+                // Hidden layer 1: 500 neurons, ReLU
+                let x = tf.layers.dense({ units: HIDDEN1_UNITS, activation: 'relu', kernelInitializer: 'glorotUniform',
+                    name: 'dense1' }).apply(input);
+
+                // Dropout 20%
+                x = tf.layers.dropout({ rate: DROPOUT_RATE, name: 'dropout1' }).apply(x);
+
+                // Hidden layer 2: 10 neurons, ReLU
+                x = tf.layers.dense({ units: HIDDEN2_UNITS, activation: 'relu', kernelInitializer: 'glorotUniform',
+                    name: 'dense2' }).apply(x);
+
+                // Output layer: 4 actions, Softmax
+                const output = tf.layers.dense({ units: ACTION_DIM, activation: 'softmax', kernelInitializer: 'glorotUniform',
+                    name: 'output' }).apply(x);
+
+                const model = tf.model({ inputs: input, outputs: output });
+                model.compile({
+                    optimizer: tf.train.adam(LEARNING_RATE),
+                    loss: 'categoricalCrossentropy'
+                });
+                return model;
+            }
+
+            let model = buildModel();
+
+            // ==================== MAZE GENERATION ====================
+            function createBaseMaze() {
+                // Initialize all as path
+                const m = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
+                // Add outer walls
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    m[r][0] = 1;
+                    m[r][GRID_SIZE - 1] = 1;
+                }
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    m[0][c] = 1;
+                    m[GRID_SIZE - 1][c] = 1;
+                }
+                // Open start and goal
+                m[0][0] = 0;
+                m[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                // Ensure paths adjacent to start and goal
+                if (GRID_SIZE > 2) {
+                    m[0][1] = 0;
+                    m[1][0] = 0;
+                    m[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
+                    m[GRID_SIZE - 2][GRID_SIZE - 1] = 0;
+                }
+                return m;
+            }
+
+            function generateRandomInternalWalls(m) {
+                // Reset internal walls (keep outer walls)
+                const newMaze = m.map(row => [...row]);
+                // Clear all internal walls except border
+                for (let r = 1; r < GRID_SIZE - 1; r++) {
+                    for (let c = 1; c < GRID_SIZE - 1; c++) {
+                        if (!(r === 0 && c === 0) && !(r === GRID_SIZE - 1 && c === GRID_SIZE - 1)) {
+                            newMaze[r][c] = 0;
+                        }
+                    }
+                }
+                // Also ensure start/goal paths
+                newMaze[0][0] = 0;
+                newMaze[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                if (GRID_SIZE > 2) {
+                    newMaze[0][1] = 0;
+                    newMaze[1][0] = 0;
+                    newMaze[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
+                    newMaze[GRID_SIZE - 2][GRID_SIZE - 1] = 0;
+                }
+
+                // Add random walls (25-40% density)
+                const density = 0.25 + Math.random() * 0.2;
+                for (let r = 1; r < GRID_SIZE - 1; r++) {
+                    for (let c = 1; c < GRID_SIZE - 1; c++) {
+                        if ((r === 0 && c === 0) || (r === GRID_SIZE - 1 && c === GRID_SIZE - 1)) continue;
+                        if (Math.random() < density) {
+                            newMaze[r][c] = 1;
+                        }
+                    }
+                }
+                // Ensure start and goal are open
+                newMaze[0][0] = 0;
+                newMaze[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                if (GRID_SIZE > 2) {
+                    newMaze[0][1] = 0;
+                    newMaze[1][0] = 0;
+                    newMaze[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
+                    newMaze[GRID_SIZE - 2][GRID_SIZE - 1] = 0;
+                }
+                // Verify path exists (BFS)
+                if (!pathExists(newMaze, 0, 0, GRID_SIZE - 1, GRID_SIZE - 1)) {
+                    // If no path, carve a simple corridor
+                    return createGuaranteedPath(newMaze);
+                }
+                return newMaze;
+            }
+
+            function pathExists(m, sr, sc, er, ec) {
+                const visited = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
+                const queue = [{ r: sr, c: sc }];
+                visited[sr][sc] = true;
+                while (queue.length > 0) {
+                    const { r, c } = queue.shift();
+                    if (r === er && c === ec) return true;
+                    for (const d of DIRS) {
+                        const nr = r + d.dr;
+                        const nc = c + d.dc;
+                        if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && !visited[nr][nc] && m[nr][nc] ===
+                            0) {
+                            visited[nr][nc] = true;
+                            queue.push({ r: nr, c: nc });
+                        }
+                    }
+                }
+                return false;
+            }
+
+            function createGuaranteedPath(m) {
+                const newMaze = m.map(row => [...row]);
+                // Carve a path from start to goal using random walk with bias
+                let r = 0,
+                    c = 0;
+                const maxAttempts = 500;
+                for (let i = 0; i < maxAttempts; i++) {
+                    if (r === GRID_SIZE - 1 && c === GRID_SIZE - 1) break;
+                    newMaze[r][c] = 0;
+                    const choices = [];
+                    if (r < GRID_SIZE - 1 && !(r + 1 === GRID_SIZE - 1 && c === GRID_SIZE - 1 ? false : false))
+                        choices.push({ dr: 1, dc: 0 });
+                    if (c < GRID_SIZE - 1) choices.push({ dr: 0, dc: 1 });
+                    if (r > 0) choices.push({ dr: -1, dc: 0 });
+                    if (c > 0) choices.push({ dr: 0, dc: -1 });
+                    // Bias towards goal
+                    const goalBias = choices.filter(ch => (r + ch.dr <= GRID_SIZE - 1 && c + ch.dc <= GRID_SIZE - 1) && (r +
+                        ch.dr >= r || c + ch.dc >= c));
+                    const selected = goalBias.length > 0 ? goalBias[Math.floor(Math.random() * goalBias.length)] : choices[
+                        Math.floor(Math.random() * choices.length)];
+                    r += selected.dr;
+                    c += selected.dc;
+                    if (r < 0) r = 0;
+                    if (c < 0) c = 0;
+                    if (r >= GRID_SIZE) r = GRID_SIZE - 1;
+                    if (c >= GRID_SIZE) c = GRID_SIZE - 1;
+                    newMaze[r][c] = 0;
+                }
+                newMaze[0][0] = 0;
+                newMaze[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                if (GRID_SIZE > 2) {
+                    newMaze[0][1] = 0;
+                    newMaze[1][0] = 0;
+                    newMaze[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
+                    newMaze[GRID_SIZE - 2][GRID_SIZE - 1] = 0;
+                }
+                return newMaze;
+            }
+
+            function initializeMaze() {
+                const base = createBaseMaze();
+                maze = generateRandomInternalWalls(base);
+                agentPos = { r: 0, c: 0 };
+                goalPos = { r: GRID_SIZE - 1, c: GRID_SIZE - 1 };
+            }
+
+            function changeRandomWalls() {
+                if (!isRunning) return;
+                const base = createBaseMaze();
+                maze = generateRandomInternalWalls(base);
+                // If agent is on a wall, move to nearest open cell
+                if (maze[agentPos.r][agentPos.c] === 1) {
+                    const nearest = findNearestOpen(agentPos.r, agentPos.c);
+                    if (nearest) {
+                        agentPos.r = nearest.r;
+                        agentPos.c = nearest.c;
+                    }
+                }
+                console.log('🔄 Walls changed dynamically');
+            }
+
+            function findNearestOpen(r, c) {
+                const visited = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
+                const queue = [{ r, c }];
+                visited[r][c] = true;
+                while (queue.length > 0) {
+                    const curr = queue.shift();
+                    if (maze[curr.r][curr.c] === 0) return { r: curr.r, c: curr.c };
+                    for (const d of DIRS) {
+                        const nr = curr.r + d.dr;
+                        const nc = curr.c + d.dc;
+                        if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && !visited[nr][nc]) {
+                            visited[nr][nc] = true;
+                            queue.push({ r: nr, c: nc });
+                        }
+                    }
+                }
+                return { r: 0, c: 0 };
+            }
+
+            // ==================== SENSORS & STATE ====================
+            function getSensors() {
+                const sensors = [];
+                for (const sd of SENSOR_DIRS) {
+                    const nr = agentPos.r + sd.dr;
+                    const nc = agentPos.c + sd.dc;
+                    if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) {
+                        sensors.push(1.0); // wall
+                    } else {
+                        sensors.push(maze[nr][nc] === 1 ? 1.0 : 0.0);
+                    }
+                }
+                return sensors;
+            }
+
+            function getState() {
+                const sensors = getSensors();
+                const agentR = agentPos.r / (GRID_SIZE - 1);
+                const agentC = agentPos.c / (GRID_SIZE - 1);
+                const goalR = goalPos.r / (GRID_SIZE - 1);
+                const goalC = goalPos.c / (GRID_SIZE - 1);
+                return [...sensors, agentR, agentC, goalR, goalC];
+            }
+
+            // ==================== ACTION & REWARD ====================
+            function takeAction(actionIndex) {
+                const dir = DIRS[actionIndex];
+                const nr = agentPos.r + dir.dr;
+                const nc = agentPos.c + dir.dc;
+                let reward = -0.01; // small step penalty
+                let done = false;
+
+                if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE || maze[nr][nc] === 1) {
+                    // Hit wall - stay in place, larger penalty
+                    reward = -0.1;
+                } else {
+                    agentPos.r = nr;
+                    agentPos.c = nc;
+                    // Check if reached goal
+                    if (agentPos.r === goalPos.r && agentPos.c === goalPos.c) {
+                        reward = 10.0;
+                        done = true;
+                    }
+                }
+                // Additional reward for getting closer to goal
+                const prevDist = Math.abs(agentPos.r - goalPos.r) + Math.abs(agentPos.c - goalPos.c);
+                const newDist = Math.abs((nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE ? agentPos.r : nr) -
+                    goalPos.r) + Math.abs((nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE ? agentPos.c : nc) -
+                    goalPos.c);
+                if (newDist < prevDist && !done) {
+                    reward += 0.05;
+                }
+
+                return { reward, done };
+            }
+
+            // ==================== TRAINING ====================
+            function computeDiscountedRewards(rewards) {
+                const discounted = new Array(rewards.length).fill(0);
+                let cumulative = 0;
+                for (let i = rewards.length - 1; i >= 0; i--) {
+                    cumulative = rewards[i] + GAMMA * cumulative;
+                    discounted[i] = cumulative;
+                }
+                // Normalize
+                const mean = discounted.reduce((a, b) => a + b, 0) / discounted.length;
+                const std = Math.sqrt(discounted.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / discounted.length) || 1;
+                return discounted.map(v => (v - mean) / std);
+            }
+
+            async function trainOnEpisode() {
+                if (episodeBuffer.length === 0) return;
+                trainingInProgress = true;
+                const states = episodeBuffer.map(e => e.state);
+                const actions = episodeBuffer.map(e => e.action);
+                const rewards = episodeBuffer.map(e => e.reward);
+
+                const discountedRewards = computeDiscountedRewards(rewards);
+
+                // Convert to tensors
+                const stateTensor = tf.tensor2d(states);
+                const discountedRewardTensor = tf.tensor1d(discountedRewards);
+
+                // Compute gradients using custom training loop
+                const actionIndices = actions;
+
+                const loss = tf.tidy(() => {
+                    const probs = model.predict(stateTensor, { verbose: false });
+                    const actionMasks = tf.oneHot(actionIndices, ACTION_DIM);
+                    const logProbs = tf.log(probs.add(1e-10));
+                    const selectedLogProbs = tf.sum(logProbs.mul(actionMasks), 1);
+                    const weightedLogProbs = selectedLogProbs.mul(discountedRewardTensor);
+                    return tf.neg(tf.mean(weightedLogProbs));
+                });
+
+                const lossVal = loss.dataSync()[0];
+                lastLoss = lossVal;
+
+                // Apply gradients manually
+                const grads = tf.variableGrads(() => {
+                    const probs = model.predict(stateTensor, { verbose: false });
+                    const actionMasks = tf.oneHot(actionIndices, ACTION_DIM);
+                    const logProbs = tf.log(probs.add(1e-10));
+                    const selectedLogProbs = tf.sum(logProbs.mul(actionMasks), 1);
+                    const weightedLogProbs = selectedLogProbs.mul(discountedRewardTensor);
+                    return tf.neg(tf.mean(weightedLogProbs));
+                });
+
+                const optimizer = tf.train.adam(LEARNING_RATE);
+                optimizer.applyGradients(grads.grads);
+
+                // Cleanup
+                loss.dispose();
+                stateTensor.dispose();
+                discountedRewardTensor.dispose();
+                Object.values(grads.grads).forEach(g => g.dispose());
+                grads.value.dispose();
+
+                trainingInProgress = false;
+            }
+
+            // ==================== EPISODE LOOP ====================
+            async function runEpisode() {
+                if (!isRunning) return;
+                if (trainingInProgress) {
+                    animationId = requestAnimationFrame(() => runEpisode());
+                    return;
+                }
+
+                // Reset agent position
+                agentPos = { r: 0, c: 0 };
+                currentTotalReward = 0;
+                currentSteps = 0;
+                episodeBuffer = [];
+                let done = false;
+
+                while (!done && currentSteps < MAX_STEPS_PER_EPISODE && isRunning) {
+                    const state = getState();
+                    const stateTensor = tf.tensor2d([state]);
+                    const probs = model.predict(stateTensor, { verbose: false });
+                    const probArray = await probs.data();
+                    stateTensor.dispose();
+                    probs.dispose();
+
+                    // Sample action from probability distribution
+                    const actionIndex = sampleFromDistribution(probArray);
+                    const { reward, done: stepDone } = takeAction(actionIndex);
+
+                    episodeBuffer.push({ state, action: actionIndex, reward });
+                    currentTotalReward += reward;
+                    currentSteps++;
+                    done = stepDone;
+
+                    // Render
+                    drawMaze();
+                    updateDashboard();
+
+                    // Delay for visualization
+                    const speed = parseInt(speedSlider.value);
+                    const delay = Math.max(10, 200 - speed * 15);
+                    if (delay > 5 && isRunning) {
+                        await sleep(delay);
+                    }
+                }
+
+                // End of episode
+                if (done) {
+                    successCount++;
+                    totalRewardAccum += currentTotalReward;
+                    // Save model weights after successful episode
+                    if (dbReady || true) {
+                        saveWeightsToDB(model).catch(e => console.warn('Auto-save failed:', e));
+                    }
+                }
+                episodeCount++;
+                totalRewardAccum += currentTotalReward;
+
+                // Train on collected episode
+                if (episodeBuffer.length > 0) {
+                    await trainOnEpisode();
+                }
+
+                // Update UI
+                updateDashboard();
+                drawMaze();
+
+                // Continue loop
+                if (isRunning) {
+                    animationId = requestAnimationFrame(() => runEpisode());
+                }
+            }
+
+            function sampleFromDistribution(probs) {
+                let r = Math.random();
+                let cumulative = 0;
+                for (let i = 0; i < probs.length; i++) {
+                    cumulative += probs[i];
+                    if (r <= cumulative) return i;
+                }
+                return probs.length - 1;
+            }
+
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            // ==================== RENDERING ====================
+            function drawMaze() {
+                ctx.clearRect(0, 0, 480, 480);
+                // Draw grid cells
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        const x = c * CELL_SIZE;
+                        const y = r * CELL_SIZE;
+                        if (maze[r][c] === 1) {
+                            ctx.fillStyle = '#2d2d44';
+                            ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                            ctx.fillStyle = '#3a3a55';
+                            ctx.fillRect(x + 3, y + 3, CELL_SIZE - 6, CELL_SIZE - 6);
+                        } else {
+                            ctx.fillStyle = '#1c1c2e';
+                            ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                            ctx.fillStyle = '#222238';
+                            ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                        }
+                    }
+                }
+
+                // Draw sensor highlights
+                const sensors = getSensors();
+                for (let i = 0; i < SENSOR_DIRS.length; i++) {
+                    const sd = SENSOR_DIRS[i];
+                    const sr = agentPos.r + sd.dr;
+                    const sc = agentPos.c + sd.dc;
+                    if (sr >= 0 && sr < GRID_SIZE && sc >= 0 && sc < GRID_SIZE) {
+                        const sx = sc * CELL_SIZE;
+                        const sy = sr * CELL_SIZE;
+                        ctx.fillStyle = sensors[i] > 0.5 ? 'rgba(255,94,122,0.3)' : 'rgba(0,229,255,0.15)';
+                        ctx.fillRect(sx + 2, sy + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                        ctx.strokeStyle = sensors[i] > 0.5 ? '#ff5e7a88' : '#00e5ff44';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(sx + 2, sy + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                    }
+                }
+
+                // Draw goal
+                const gx = goalPos.c * CELL_SIZE;
+                const gy = goalPos.r * CELL_SIZE;
+                const goalGrad = ctx.createRadialGradient(gx + CELL_SIZE / 2, gy + CELL_SIZE / 2, 4, gx + CELL_SIZE / 2, gy +
+                    CELL_SIZE / 2, CELL_SIZE / 2);
+                goalGrad.addColorStop(0, '#ffd700');
+                goalGrad.addColorStop(0.6, '#ff8c00');
+                goalGrad.addColorStop(1, '#ffd70000');
+                ctx.fillStyle = goalGrad;
+                ctx.beginPath();
+                ctx.arc(gx + CELL_SIZE / 2, gy + CELL_SIZE / 2, CELL_SIZE / 2 - 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px "Segoe UI"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🏁', gx + CELL_SIZE / 2, gy + CELL_SIZE / 2);
+
+                // Draw agent
+                const ax = agentPos.c * CELL_SIZE;
+                const ay = agentPos.r * CELL_SIZE;
+                const agentGrad = ctx.createRadialGradient(ax + CELL_SIZE / 2, ay + CELL_SIZE / 2, 3, ax + CELL_SIZE / 2, ay +
+                    CELL_SIZE / 2, CELL_SIZE / 2);
+                agentGrad.addColorStop(0, '#ffffff');
+                agentGrad.addColorStop(0.3, '#00e5ff');
+                agentGrad.addColorStop(1, '#00668000');
+                ctx.fillStyle = agentGrad;
+                ctx.beginPath();
+                ctx.arc(ax + CELL_SIZE / 2, ay + CELL_SIZE / 2, CELL_SIZE / 2 - 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#00e5ff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 16px "Segoe UI"';
+                ctx.fillText('🤖', ax + CELL_SIZE / 2, ay + CELL_SIZE / 2);
+
+                // Grid lines
+                ctx.strokeStyle = '#2a2a3a22';
+                ctx.lineWidth = 0.5;
+                for (let i = 0; i <= GRID_SIZE; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(i * CELL_SIZE, 0);
+                    ctx.lineTo(i * CELL_SIZE, 480);
+                    ctx.stroke();
+                    ctx.moveTo(0, i * CELL_SIZE);
+                    ctx.lineTo(480, i * CELL_SIZE);
+                    ctx.stroke();
+                }
+            }
+
+            function updateDashboard() {
+                episodeNumEl.textContent = episodeCount;
+                totalRewardEl.textContent = totalRewardAccum.toFixed(2);
+                if (lastLoss !== null) {
+                    lossValueEl.textContent = lastLoss.toFixed(4);
+                } else {
+                    lossValueEl.textContent = '---';
+                }
+                const rate = episodeCount > 0 ? ((successCount / episodeCount) * 100).toFixed(1) : '0.0';
+                successRateEl.textContent = rate + '%';
+                stepCountEl.textContent = currentSteps;
+            }
+
+            // ==================== CONTROL ====================
+            function startTraining() {
+                if (isRunning) return;
+                isRunning = true;
+                btnStartStop.textContent = '⏸️ إيقاف مؤقت';
+                btnStartStop.classList.remove('primary');
+                btnStartStop.classList.add('danger');
+                // Start wall change timer
+                if (wallChangeTimer) clearInterval(wallChangeTimer);
+                wallChangeTimer = setInterval(changeRandomWalls, WALL_CHANGE_INTERVAL_MS);
+                // Start episode loop
+                runEpisode();
+            }
+
+            function stopTraining() {
+                isRunning = false;
+                btnStartStop.textContent = '▶ ابدأ التدريب';
+                btnStartStop.classList.add('primary');
+                btnStartStop.classList.remove('danger');
+                if (wallChangeTimer) {
+                    clearInterval(wallChangeTimer);
+                    wallChangeTimer = null;
+                }
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+            }
+
+            async function resetAll() {
+                stopTraining();
+                episodeCount = 0;
+                totalRewardAccum = 0;
+                currentTotalReward = 0;
+                currentSteps = 0;
+                lastLoss = null;
+                successCount = 0;
+                episodeBuffer = [];
+                model.dispose();
+                model = buildModel();
+                initializeMaze();
+                agentPos = { r: 0, c: 0 };
+                updateDashboard();
+                drawMaze();
+                updateDBStatus('loading', 'نموذج جديد');
+                console.log('🔄 Reset complete');
+            }
+
+            // ==================== EVENT LISTENERS ====================
+            btnStartStop.addEventListener('click', () => {
+                if (isRunning) {
+                    stopTraining();
+                } else {
+                    startTraining();
+                }
+            });
+
+            btnReset.addEventListener('click', async () => {
+                await resetAll();
+            });
+
+            btnSaveWeights.addEventListener('click', async () => {
+                await saveWeightsToDB(model);
+            });
+
+            btnLoadWeights.addEventListener('click', async () => {
+                const loaded = await loadWeightsFromDB(model);
+                if (loaded) {
+                    console.log('✅ Model weights loaded successfully');
+                    updateDashboard();
+                }
+            });
+
+            btnClearDB.addEventListener('click', async () => {
+                await clearDB();
+                updateDBStatus('loading', 'تم المسح');
+            });
+
+            // ==================== INITIALIZATION ====================
+            async function init() {
+                initializeMaze();
+                drawMaze();
+                updateDashboard();
+                updateDBStatus('loading', 'جاري التحقق...');
+                // Try to load existing weights
+                const loaded = await loadWeightsFromDB(model);
+                if (!loaded) {
+                    updateDBStatus('loading', 'نموذج جديد');
+                }
+                console.log('🚀 Maze RL Game initialized');
+                console.log('State dim:', STATE_DIM, 'Actions:', ACTION_DIM);
+                console.log('Model summary:');
+                model.summary();
+            }
+
+            init().catch(err => {
+                console.error('Initialization error:', err);
+                updateDBStatus('error', 'خطأ في التهيئة');
+            });
+
+            // Expose for debugging
+            window.mazeGame = {
+                getState,
+                getMaze: () => maze,
+                getAgentPos: () => agentPos,
+                getGoalPos: () => goalPos,
+                getEpisodeCount: () => episodeCount,
+                model,
+                startTraining,
+                stopTraining,
+                resetAll,
+            };
+        })();
+    </script>
 </body>
 </html>
+```
