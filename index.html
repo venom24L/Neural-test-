@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متاهة التعلم المعزز - Cyberpunk RL</title>
+    <title>متاهة التعلم المعزز - Cyberpunk RL v2.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js">
     </script>
     <style>
@@ -22,7 +22,6 @@
             --agent-color: #00e5ff;
             --goal-color: #ffd700;
             --wall-color: #2a2a40;
-            --path-color: #0f0f20;
             --sensor-color: rgba(0, 229, 255, 0.3);
             --neon-pink: #ff4d8c;
             --neon-blue: #4da6ff;
@@ -92,7 +91,6 @@
             display: block;
             background: #0a0a18;
             box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(157, 78, 255, 0.15);
-            image-rendering: auto;
         }
 
         .dashboard {
@@ -142,7 +140,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 2px;
         }
 
         .stat-card {
@@ -174,18 +171,10 @@
             min-width: 50px;
             text-align: center;
         }
-        .stat-value.highlight {
-            color: var(--accent-glow);
-            text-shadow: 0 0 8px var(--accent);
-        }
-        .stat-value.success {
-            color: var(--success);
-            text-shadow: 0 0 8px var(--success);
-        }
-        .stat-value.warning {
-            color: var(--warning);
-            text-shadow: 0 0 8px var(--warning);
-        }
+        .stat-value.highlight { color: var(--accent-glow); text-shadow: 0 0 8px var(--accent); }
+        .stat-value.success { color: var(--success); text-shadow: 0 0 8px var(--success); }
+        .stat-value.warning { color: var(--warning); text-shadow: 0 0 8px var(--warning); }
+
         .db-status {
             display: flex;
             align-items: center;
@@ -200,33 +189,12 @@
             background: #555;
             transition: background 0.3s;
         }
-        .db-dot.saved {
-            background: var(--success);
-            box-shadow: 0 0 12px var(--success);
-        }
-        .db-dot.loading {
-            background: var(--warning);
-            box-shadow: 0 0 12px var(--warning);
-            animation: pulse 0.8s infinite;
-        }
-        .db-dot.error {
-            background: var(--danger);
-            box-shadow: 0 0 12px var(--danger);
-        }
-        @keyframes pulse {
-            0%,
-            100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.4;
-            }
-        }
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
+        .db-dot.saved { background: var(--success); box-shadow: 0 0 12px var(--success); }
+        .db-dot.loading { background: var(--warning); box-shadow: 0 0 12px var(--warning); animation: pulse 0.8s infinite; }
+        .db-dot.error { background: var(--danger); box-shadow: 0 0 12px var(--danger); }
+        @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
         button {
             background: var(--surface2);
             border: 1px solid var(--border);
@@ -249,93 +217,34 @@
             box-shadow: 0 0 15px rgba(157, 78, 255, 0.3);
             transform: translateY(-1px);
         }
-        button:active {
-            transform: scale(0.96);
-        }
+        button:active { transform: scale(0.96); }
         button.primary {
             background: var(--accent);
             border-color: var(--accent);
             color: #fff;
             font-weight: 700;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
         }
-        button.primary:hover {
-            background: #b87eff;
-            box-shadow: 0 0 25px rgba(157, 78, 255, 0.6);
-        }
-        button.danger {
-            border-color: var(--danger);
-            color: var(--danger);
-        }
-        button.danger:hover {
-            background: rgba(255, 62, 108, 0.15);
-            border-color: var(--danger);
-            box-shadow: 0 0 15px rgba(255, 62, 108, 0.3);
-        }
-        .speed-slider {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            width: 100%;
-        }
+        button.primary:hover { background: #b87eff; box-shadow: 0 0 25px rgba(157,78,255,0.6); }
+        button.danger { border-color: var(--danger); color: var(--danger); }
+        button.danger:hover { background: rgba(255,62,108,0.15); border-color: var(--danger); box-shadow: 0 0 15px rgba(255,62,108,0.3); }
+
+        .speed-slider { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--text-secondary); width: 100%; }
         input[type="range"] {
-            -webkit-appearance: none;
-            flex: 1;
-            height: 6px;
-            border-radius: 3px;
-            background: var(--border);
-            outline: none;
+            -webkit-appearance: none; flex: 1; height: 6px; border-radius: 3px; background: var(--border); outline: none;
         }
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-            border: 2px solid #fff;
-            box-shadow: 0 0 10px var(--accent);
+            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent);
+            cursor: pointer; border: 2px solid #fff; box-shadow: 0 0 10px var(--accent);
         }
-        .legend {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            justify-content: center;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .legend-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 3px;
-            display: inline-block;
-            box-shadow: 0 0 8px currentColor;
-        }
+        .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.7rem; color: var(--text-secondary); justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; box-shadow: 0 0 8px currentColor; }
+
         @media (max-width: 950px) {
-            .main-container {
-                flex-direction: column;
-                align-items: center;
-                gap: 14px;
-                padding: 10px;
-            }
-            .dashboard,
-            .nn-panel {
-                max-width: 100%;
-                width: 100%;
-                min-width: auto;
-            }
-            canvas {
-                width: 100%;
-                height: auto;
-                max-width: 420px;
-            }
+            .main-container { flex-direction: column; align-items: center; gap: 14px; padding: 10px; }
+            .dashboard, .nn-panel { max-width: 100%; width: 100%; min-width: auto; }
+            canvas { width: 100%; height: auto; max-width: 420px; }
         }
     </style>
 </head>
@@ -361,7 +270,7 @@
             </div>
         </div>
 
-        <!-- Dashboard Panel -->
+        <!-- Dashboard -->
         <div class="dashboard">
             <h2>📊 لوحة التحكم</h2>
             <div class="stat-card">
@@ -394,7 +303,7 @@
             <button id="btnClearDB">🗑️ مسح التخزين</button>
         </div>
 
-        <!-- Neural Network Visualizer Panel -->
+        <!-- Neural Network Visualizer -->
         <div class="nn-panel">
             <h3>🧬 مراقب الشبكة العصبية</h3>
             <canvas id="nnCanvas" width="280" height="320" aria-label="رسم الشبكة العصبية"></canvas>
@@ -419,12 +328,9 @@
             const DB_STORE_NAME = 'model_weights';
 
             const DIRS = [
-                { dr: -1, dc: 0, name: 'up' },
-                { dr: 1, dc: 0, name: 'down' },
-                { dr: 0, dc: -1, name: 'left' },
-                { dr: 0, dc: 1, name: 'right' }
+                { dr: -1, dc: 0 }, { dr: 1, dc: 0 },
+                { dr: 0, dc: -1 }, { dr: 0, dc: 1 }
             ];
-
             const SENSOR_DIRS = [
                 { dr: -1, dc: 0 }, { dr: -1, dc: 1 }, { dr: 0, dc: 1 }, { dr: 1, dc: 1 },
                 { dr: 1, dc: 0 }, { dr: 1, dc: -1 }, { dr: 0, dc: -1 }, { dr: -1, dc: -1 }
@@ -449,10 +355,10 @@
             const btnLoadWeights = document.getElementById('btnLoadWeights');
             const btnClearDB = document.getElementById('btnClearDB');
 
-            // Game State
+            // State
             let maze = [];
             let agentPos = { r: 0, c: 0 };
-            let goalPos = { r: GRID_SIZE - 1, c: GRID_SIZE - 1 };
+            let goalPos = { r: GRID_SIZE-1, c: GRID_SIZE-1 };
             let episodeCount = 0;
             let totalRewardAccum = 0;
             let currentTotalReward = 0;
@@ -466,28 +372,24 @@
             let trainingInProgress = false;
             let dbReady = false;
 
-            // Neural network visual data
             let currentActionIndex = -1;
             let currentActivations = {
-                dense1: new Array(20).fill(0), // sample first 20 of 500
+                dense1: new Array(20).fill(0),
                 dense2: new Array(10).fill(0),
                 output: new Array(4).fill(0)
             };
-            let lastStateForVis = null;
             let visUpdateCounter = 0;
 
             // ==================== INDEXEDDB ====================
             function openDB() {
                 return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(DB_NAME, 1);
-                    request.onupgradeneeded = (event) => {
-                        const db = event.target.result;
-                        if (!db.objectStoreNames.contains(DB_STORE_NAME)) {
-                            db.createObjectStore(DB_STORE_NAME);
-                        }
+                    const req = indexedDB.open(DB_NAME, 1);
+                    req.onupgradeneeded = e => {
+                        if (!e.target.result.objectStoreNames.contains(DB_STORE_NAME))
+                            e.target.result.createObjectStore(DB_STORE_NAME);
                     };
-                    request.onsuccess = (event) => resolve(event.target.result);
-                    request.onerror = (event) => reject(event.target.error);
+                    req.onsuccess = e => resolve(e.target.result);
+                    req.onerror = e => reject(e.target.error);
                 });
             }
 
@@ -495,21 +397,18 @@
                 try {
                     const db = await openDB();
                     const weights = model.getWeights();
-                    const weightData = await Promise.all(weights.map(async (w) => ({
+                    const weightData = await Promise.all(weights.map(async w => ({
                         data: Array.from(await w.data()),
                         shape: w.shape
                     })));
                     const tx = db.transaction(DB_STORE_NAME, 'readwrite');
-                    const store = tx.objectStore(DB_STORE_NAME);
-                    store.put({ weights: weightData, timestamp: Date.now() }, 'latest');
-                    await new Promise((resolve, reject) => {
-                        tx.oncomplete = resolve;
-                        tx.onerror = reject;
-                    });
+                    tx.objectStore(DB_STORE_NAME).put({ weights: weightData, timestamp: Date.now() }, 'latest');
+                    await new Promise((resolve, reject) => { tx.oncomplete = resolve;
+                        tx.onerror = reject; });
                     db.close();
                     updateDBStatus('saved', 'محفوظ ✅');
                 } catch (err) {
-                    console.error('❌ فشل حفظ الأوزان:', err);
+                    console.error('❌ حفظ الأوزان:', err);
                     updateDBStatus('error', 'فشل الحفظ');
                 }
             }
@@ -519,10 +418,10 @@
                     const db = await openDB();
                     const tx = db.transaction(DB_STORE_NAME, 'readonly');
                     const store = tx.objectStore(DB_STORE_NAME);
-                    const request = store.get('latest');
                     const result = await new Promise((resolve, reject) => {
-                        request.onsuccess = () => resolve(request.result);
-                        request.onerror = () => reject(request.error);
+                        const req = store.get('latest');
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => reject(req.error);
                     });
                     db.close();
                     if (result && result.weights) {
@@ -536,7 +435,7 @@
                         return false;
                     }
                 } catch (err) {
-                    console.error('❌ فشل تحميل الأوزان:', err);
+                    console.error('❌ تحميل الأوزان:', err);
                     updateDBStatus('error', 'فشل التحميل');
                     return false;
                 }
@@ -546,17 +445,12 @@
                 try {
                     const db = await openDB();
                     const tx = db.transaction(DB_STORE_NAME, 'readwrite');
-                    const store = tx.objectStore(DB_STORE_NAME);
-                    store.clear();
-                    await new Promise((resolve, reject) => {
-                        tx.oncomplete = resolve;
-                        tx.onerror = reject;
-                    });
+                    tx.objectStore(DB_STORE_NAME).clear();
+                    await new Promise((resolve, reject) => { tx.oncomplete = resolve;
+                        tx.onerror = reject; });
                     db.close();
                     updateDBStatus('loading', 'تم المسح');
-                } catch (err) {
-                    console.error('فشل مسح DB:', err);
-                }
+                } catch (err) { console.error('فشل مسح DB:', err); }
             }
 
             function updateDBStatus(status, text) {
@@ -575,19 +469,16 @@
                     name: 'dense2' }).apply(dropout1);
                 const output = tf.layers.dense({ units: ACTION_DIM, activation: 'softmax', kernelInitializer: 'glorotUniform',
                     name: 'output' }).apply(dense2);
-
                 const model = tf.model({ inputs: input, outputs: output });
-                model.compile({
-                    optimizer: tf.train.adam(LEARNING_RATE),
-                    loss: 'categoricalCrossentropy'
-                });
+                model.compile({ optimizer: tf.train.adam(LEARNING_RATE), loss: 'categoricalCrossentropy' });
                 return model;
             }
 
             let model = buildModel();
+            // Activation extraction models (created once)
+            let activationModels = createActivationModels();
 
-            // Create intermediate models for activation extraction
-            function getActivationModels() {
+            function createActivationModels() {
                 const dense1Layer = model.getLayer('dense1');
                 const dense2Layer = model.getLayer('dense2');
                 const outputLayer = model.getLayer('output');
@@ -601,46 +492,24 @@
             async function updateActivations(state) {
                 try {
                     const stateTensor = tf.tensor2d([state]);
-                    const acts = getActivationModels();
-                    const d1Out = acts.dense1Model.predict(stateTensor, { verbose: false });
-                    const d2Out = acts.dense2Model.predict(stateTensor, { verbose: false });
-                    const outOut = acts.outputModel.predict(stateTensor, { verbose: false });
-
-                    const d1Data = await d1Out.data();
-                    const d2Data = await d2Out.data();
-                    const outData = await outOut.data();
-
-                    // Sample first 20 of dense1
-                    for (let i = 0; i < 20; i++) {
-                        currentActivations.dense1[i] = d1Data[i] || 0;
-                    }
-                    for (let i = 0; i < 10; i++) {
-                        currentActivations.dense2[i] = d2Data[i] || 0;
-                    }
-                    for (let i = 0; i < 4; i++) {
-                        currentActivations.output[i] = outData[i] || 0;
-                    }
-
-                    stateTensor.dispose();
-                    d1Out.dispose();
-                    d2Out.dispose();
-                    outOut.dispose();
-                } catch (e) {
-                    // silent fail
-                }
+                    const d1 = activationModels.dense1Model.predict(stateTensor, { verbose: false });
+                    const d2 = activationModels.dense2Model.predict(stateTensor, { verbose: false });
+                    const out = activationModels.outputModel.predict(stateTensor, { verbose: false });
+                    const [d1Data, d2Data, outData] = await Promise.all([d1.data(), d2.data(), out.data()]);
+                    for (let i = 0; i < 20; i++) currentActivations.dense1[i] = d1Data[i] || 0;
+                    for (let i = 0; i < 10; i++) currentActivations.dense2[i] = d2Data[i] || 0;
+                    for (let i = 0; i < 4; i++) currentActivations.output[i] = outData[i] || 0;
+                    tf.dispose([stateTensor, d1, d2, out]);
+                } catch (e) { /* ignore */ }
             }
 
-            // ==================== MAZE GENERATION ====================
+            // ==================== MAZE ====================
             function createBaseMaze() {
                 const m = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
-                for (let r = 0; r < GRID_SIZE; r++) {
-                    m[r][0] = 1;
-                    m[r][GRID_SIZE - 1] = 1;
-                }
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    m[0][c] = 1;
-                    m[GRID_SIZE - 1][c] = 1;
-                }
+                for (let r = 0; r < GRID_SIZE; r++) { m[r][0] = 1;
+                    m[r][GRID_SIZE - 1] = 1; }
+                for (let c = 0; c < GRID_SIZE; c++) { m[0][c] = 1;
+                    m[GRID_SIZE - 1][c] = 1; }
                 m[0][0] = 0;
                 m[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
                 if (GRID_SIZE > 2) {
@@ -652,54 +521,16 @@
                 return m;
             }
 
-            function generateRandomInternalWalls(m) {
-                const newMaze = m.map(row => [...row]);
-                for (let r = 1; r < GRID_SIZE - 1; r++) {
-                    for (let c = 1; c < GRID_SIZE - 1; c++) {
-                        if (!(r === 0 && c === 0) && !(r === GRID_SIZE - 1 && c === GRID_SIZE - 1)) {
-                            newMaze[r][c] = 0;
-                        }
-                    }
-                }
-                newMaze[0][0] = 0;
-                newMaze[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
-                if (GRID_SIZE > 2) {
-                    newMaze[0][1] = 0;
-                    newMaze[1][0] = 0;
-                    newMaze[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
-                    newMaze[GRID_SIZE - 2][GRID_SIZE - 1] = 0;
-                }
-                const density = 0.25 + Math.random() * 0.2;
-                for (let r = 1; r < GRID_SIZE - 1; r++) {
-                    for (let c = 1; c < GRID_SIZE - 1; c++) {
-                        if ((r === 0 && c === 0) || (r === GRID_SIZE - 1 && c === GRID_SIZE - 1)) continue;
-                        if (Math.random() < density) newMaze[r][c] = 1;
-                    }
-                }
-                newMaze[0][0] = 0;
-                newMaze[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
-                if (GRID_SIZE > 2) {
-                    newMaze[0][1] = 0;
-                    newMaze[1][0] = 0;
-                    newMaze[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
-                    newMaze[GRID_SIZE - 2][GRID_SIZE - 1] = 0;
-                }
-                if (!pathExists(newMaze, 0, 0, GRID_SIZE - 1, GRID_SIZE - 1)) {
-                    return createGuaranteedPath(newMaze);
-                }
-                return newMaze;
-            }
-
             function pathExists(m, sr, sc, er, ec) {
                 const visited = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
                 const queue = [{ r: sr, c: sc }];
                 visited[sr][sc] = true;
-                while (queue.length > 0) {
+                while (queue.length) {
                     const { r, c } = queue.shift();
                     if (r === er && c === ec) return true;
                     for (const d of DIRS) {
-                        const nr = r + d.dr;
-                        const nc = c + d.dc;
+                        const nr = r + d.dr,
+                            nc = c + d.dc;
                         if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && !visited[nr][nc] && m[nr][nc] === 0) {
                             visited[nr][nc] = true;
                             queue.push({ r: nr, c: nc });
@@ -709,38 +540,55 @@
                 return false;
             }
 
+            function generateRandomInternalWalls(base) {
+                const m = base.map(row => [...row]);
+                for (let r = 1; r < GRID_SIZE - 1; r++)
+                    for (let c = 1; c < GRID_SIZE - 1; c++)
+                        if (!(r === 0 && c === 0) && !(r === GRID_SIZE - 1 && c === GRID_SIZE - 1)) m[r][c] = 0;
+                m[0][0] = 0;
+                m[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                if (GRID_SIZE > 2) { m[0][1] = 0;
+                    m[1][0] = 0;
+                    m[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
+                    m[GRID_SIZE - 2][GRID_SIZE - 1] = 0; }
+                const density = 0.25 + Math.random() * 0.2;
+                for (let r = 1; r < GRID_SIZE - 1; r++)
+                    for (let c = 1; c < GRID_SIZE - 1; c++)
+                        if ((r !== 0 || c !== 0) && (r !== GRID_SIZE - 1 || c !== GRID_SIZE - 1) && Math.random() < density) m[
+                            r][c] = 1;
+                m[0][0] = 0;
+                m[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                if (GRID_SIZE > 2) { m[0][1] = 0;
+                    m[1][0] = 0;
+                    m[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
+                    m[GRID_SIZE - 2][GRID_SIZE - 1] = 0; }
+                if (!pathExists(m, 0, 0, GRID_SIZE - 1, GRID_SIZE - 1)) return createGuaranteedPath(m);
+                return m;
+            }
+
             function createGuaranteedPath(m) {
-                const newMaze = m.map(row => [...row]);
+                const newM = m.map(r => [...r]);
                 let r = 0,
                     c = 0;
-                const maxAttempts = 500;
-                for (let i = 0; i < maxAttempts; i++) {
+                for (let i = 0; i < 500; i++) {
                     if (r === GRID_SIZE - 1 && c === GRID_SIZE - 1) break;
-                    newMaze[r][c] = 0;
+                    newM[r][c] = 0;
                     const choices = [];
                     if (r < GRID_SIZE - 1) choices.push({ dr: 1, dc: 0 });
                     if (c < GRID_SIZE - 1) choices.push({ dr: 0, dc: 1 });
                     if (r > 0) choices.push({ dr: -1, dc: 0 });
                     if (c > 0) choices.push({ dr: 0, dc: -1 });
-                    const goalBias = choices.filter(ch => (r + ch.dr <= GRID_SIZE - 1 && c + ch.dc <= GRID_SIZE - 1) && (r + ch
-                        .dr >= r || c + ch.dc >= c));
-                    const selected = goalBias.length > 0 ? goalBias[Math.floor(Math.random() * goalBias.length)] : choices[
-                        Math.floor(Math.random() * choices.length)];
-                    r += selected.dr;
-                    c += selected.dc;
-                    r = Math.min(Math.max(r, 0), GRID_SIZE - 1);
-                    c = Math.min(Math.max(c, 0), GRID_SIZE - 1);
-                    newMaze[r][c] = 0;
+                    const sel = choices[Math.floor(Math.random() * choices.length)];
+                    r = Math.min(Math.max(r + sel.dr, 0), GRID_SIZE - 1);
+                    c = Math.min(Math.max(c + sel.dc, 0), GRID_SIZE - 1);
                 }
-                newMaze[0][0] = 0;
-                newMaze[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
-                if (GRID_SIZE > 2) {
-                    newMaze[0][1] = 0;
-                    newMaze[1][0] = 0;
-                    newMaze[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
-                    newMaze[GRID_SIZE - 2][GRID_SIZE - 1] = 0;
-                }
-                return newMaze;
+                newM[0][0] = 0;
+                newM[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                if (GRID_SIZE > 2) { newM[0][1] = 0;
+                    newM[1][0] = 0;
+                    newM[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
+                    newM[GRID_SIZE - 2][GRID_SIZE - 1] = 0; }
+                return newM;
             }
 
             function initializeMaze() {
@@ -755,9 +603,9 @@
                 const base = createBaseMaze();
                 maze = generateRandomInternalWalls(base);
                 if (maze[agentPos.r][agentPos.c] === 1) {
-                    const nearest = findNearestOpen(agentPos.r, agentPos.c);
-                    if (nearest) { agentPos.r = nearest.r;
-                        agentPos.c = nearest.c; }
+                    const near = findNearestOpen(agentPos.r, agentPos.c);
+                    if (near) { agentPos.r = near.r;
+                        agentPos.c = near.c; }
                 }
             }
 
@@ -765,12 +613,12 @@
                 const visited = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
                 const queue = [{ r, c }];
                 visited[r][c] = true;
-                while (queue.length > 0) {
-                    const curr = queue.shift();
-                    if (maze[curr.r][curr.c] === 0) return { r: curr.r, c: curr.c };
+                while (queue.length) {
+                    const cur = queue.shift();
+                    if (maze[cur.r][cur.c] === 0) return { r: cur.r, c: cur.c };
                     for (const d of DIRS) {
-                        const nr = curr.r + d.dr;
-                        const nc = curr.c + d.dc;
+                        const nr = cur.r + d.dr,
+                            nc = cur.c + d.dc;
                         if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && !visited[nr][nc]) {
                             visited[nr][nc] = true;
                             queue.push({ r: nr, c: nc });
@@ -780,63 +628,47 @@
                 return { r: 0, c: 0 };
             }
 
-            // ==================== SENSORS & STATE ====================
-            function getSensors() {
-                const sensors = [];
-                for (const sd of SENSOR_DIRS) {
-                    const nr = agentPos.r + sd.dr;
-                    const nc = agentPos.c + sd.dc;
-                    if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) sensors.push(1.0);
-                    else sensors.push(maze[nr][nc] === 1 ? 1.0 : 0.0);
-                }
-                return sensors;
-            }
-
             function getState() {
-                const sensors = getSensors();
-                const agentR = agentPos.r / (GRID_SIZE - 1);
-                const agentC = agentPos.c / (GRID_SIZE - 1);
-                const goalR = goalPos.r / (GRID_SIZE - 1);
-                const goalC = goalPos.c / (GRID_SIZE - 1);
-                return [...sensors, agentR, agentC, goalR, goalC];
+                const sensors = SENSOR_DIRS.map(d => {
+                    const nr = agentPos.r + d.dr,
+                        nc = agentPos.c + d.dc;
+                    return (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) ? 1.0 : (maze[nr][nc] === 1 ? 1.0 :
+                        0.0);
+                });
+                return [...sensors, agentPos.r / (GRID_SIZE - 1), agentPos.c / (GRID_SIZE - 1), goalPos.r / (GRID_SIZE -
+                    1), goalPos.c / (GRID_SIZE - 1)];
             }
 
-            // ==================== ACTION & REWARD ====================
-            function takeAction(actionIndex) {
-                const dir = DIRS[actionIndex];
-                const nr = agentPos.r + dir.dr;
-                const nc = agentPos.c + dir.dc;
-                let reward = -0.01;
-                let done = false;
+            function takeAction(actionIdx) {
+                const d = DIRS[actionIdx];
+                const nr = agentPos.r + d.dr,
+                    nc = agentPos.c + d.dc;
+                let reward = -0.01,
+                    done = false;
                 if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE || maze[nr][nc] === 1) {
                     reward = -0.1;
                 } else {
                     agentPos.r = nr;
                     agentPos.c = nc;
-                    if (agentPos.r === goalPos.r && agentPos.c === goalPos.c) {
-                        reward = 10.0;
-                        done = true;
-                    }
+                    if (agentPos.r === goalPos.r && agentPos.c === goalPos.c) { reward = 10.0;
+                        done = true; }
                 }
                 const prevDist = Math.abs(agentPos.r - goalPos.r) + Math.abs(agentPos.c - goalPos.c);
-                const newDist = Math.abs((nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE ? agentPos.r : nr) - goalPos
-                    .r) +
-                    Math.abs((nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE ? agentPos.c : nc) - goalPos.c);
+                const actR = (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) ? agentPos.r : nr;
+                const actC = (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) ? agentPos.c : nc;
+                const newDist = Math.abs(actR - goalPos.r) + Math.abs(actC - goalPos.c);
                 if (newDist < prevDist && !done) reward += 0.05;
                 return { reward, done };
             }
 
             // ==================== TRAINING ====================
             function computeDiscountedRewards(rewards) {
-                const discounted = new Array(rewards.length).fill(0);
-                let cumulative = 0;
-                for (let i = rewards.length - 1; i >= 0; i--) {
-                    cumulative = rewards[i] + GAMMA * cumulative;
-                    discounted[i] = cumulative;
-                }
-                const mean = discounted.reduce((a, b) => a + b, 0) / discounted.length;
-                const std = Math.sqrt(discounted.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / discounted.length) || 1;
-                return discounted.map(v => (v - mean) / std);
+                const disc = new Array(rewards.length).fill(0);
+                let cum = 0;
+                for (let i = rewards.length - 1; i >= 0; i--) cum = rewards[i] + GAMMA * cum, disc[i] = cum;
+                const mean = disc.reduce((a, b) => a + b, 0) / disc.length;
+                const std = Math.sqrt(disc.reduce((a, b) => a + (b - mean) ** 2, 0) / disc.length) || 1;
+                return disc.map(v => (v - mean) / std);
             }
 
             async function trainOnEpisode() {
@@ -845,122 +677,89 @@
                 const states = episodeBuffer.map(e => e.state);
                 const actions = episodeBuffer.map(e => e.action);
                 const rewards = episodeBuffer.map(e => e.reward);
-                const discountedRewards = computeDiscountedRewards(rewards);
+                const discRewards = computeDiscountedRewards(rewards);
 
                 const stateTensor = tf.tensor2d(states);
-                const discountedRewardTensor = tf.tensor1d(discountedRewards);
-                const actionIndicesTensor = tf.tensor1d(actions, 'int32');
+                const discTensor = tf.tensor1d(discRewards);
+                const actTensor = tf.tensor1d(actions, 'int32');
 
-                const loss = () => tf.tidy(() => {
+                const lossFn = () => tf.tidy(() => {
                     const probs = model.predict(stateTensor, { verbose: false });
-                    const actionMasks = tf.oneHot(actionIndicesTensor, ACTION_DIM);
+                    const masks = tf.oneHot(actTensor, ACTION_DIM);
                     const logProbs = tf.log(probs.add(1e-10));
-                    const selectedLogProbs = tf.sum(logProbs.mul(actionMasks), 1);
-                    const weightedLogProbs = selectedLogProbs.mul(discountedRewardTensor);
-                    return tf.neg(tf.mean(weightedLogProbs));
+                    const selected = tf.sum(logProbs.mul(masks), 1);
+                    return tf.neg(tf.mean(selected.mul(discTensor)));
                 });
 
                 const optimizer = tf.train.adam(LEARNING_RATE);
-                const lossVal = optimizer.minimize(loss).dataSync()[0];
-                lastLoss = lossVal;
+                const lossValTensor = optimizer.minimize(lossFn);
+                lastLoss = lossValTensor.dataSync()[0];
+                lossValTensor.dispose();
 
-                stateTensor.dispose();
-                discountedRewardTensor.dispose();
-                actionIndicesTensor.dispose();
+                tf.dispose([stateTensor, discTensor, actTensor]);
                 trainingInProgress = false;
             }
 
             // ==================== EPISODE LOOP ====================
             async function runEpisode() {
                 if (!isRunning) return;
-                if (trainingInProgress) {
-                    animationId = requestAnimationFrame(() => runEpisode());
-                    return;
-                }
+                if (trainingInProgress) { animationId = requestAnimationFrame(runEpisode); return; }
 
                 agentPos = { r: 0, c: 0 };
                 currentTotalReward = 0;
                 currentSteps = 0;
                 episodeBuffer = [];
                 let done = false;
-                lastStateForVis = null;
+                visUpdateCounter = 0;
 
                 while (!done && currentSteps < MAX_STEPS_PER_EPISODE && isRunning) {
                     const state = getState();
-                    const stateTensor = tf.tensor2d([state]);
-                    const probs = model.predict(stateTensor, { verbose: false });
-                    const probArray = await probs.data();
-                    stateTensor.dispose();
-                    probs.dispose();
-
-                    const actionIndex = sampleFromDistribution(probArray);
-                    currentActionIndex = actionIndex;
-                    const { reward, done: stepDone } = takeAction(actionIndex);
-                    episodeBuffer.push({ state, action: actionIndex, reward });
+                    const probsTensor = model.predict(tf.tensor2d([state]), { verbose: false });
+                    const probs = await probsTensor.data();
+                    probsTensor.dispose();
+                    const actionIdx = sample(probs);
+                    currentActionIndex = actionIdx;
+                    const { reward, done: stepDone } = takeAction(actionIdx);
+                    episodeBuffer.push({ state, action: actionIdx, reward });
                     currentTotalReward += reward;
                     currentSteps++;
                     done = stepDone;
 
-                    // Update activations for visualizer every few steps
-                    visUpdateCounter++;
-                    if (visUpdateCounter % 2 === 0 || done) {
-                        await updateActivations(state);
-                    }
-
+                    if (++visUpdateCounter % 2 === 0 || done) await updateActivations(state);
                     drawMaze();
                     drawNNVisualizer();
                     updateDashboard();
 
-                    const speed = parseInt(speedSlider.value);
-                    const delay = Math.max(10, 200 - speed * 15);
-                    if (delay > 5 && isRunning) await sleep(delay);
+                    const delay = Math.max(10, 200 - parseInt(speedSlider.value) * 15);
+                    if (delay > 5 && isRunning) await new Promise(r => setTimeout(r, delay));
                 }
 
-                if (done) {
-                    successCount++;
-                    totalRewardAccum += currentTotalReward;
-                    if (dbReady) {
-                        saveWeightsToDB(model).catch(e => console.warn('Auto-save failed:', e));
-                    }
-                }
+                if (done) { successCount++;
+                    totalRewardAccum += currentTotalReward; if (dbReady) saveWeightsToDB(model).catch(console.warn); }
                 episodeCount++;
                 totalRewardAccum += currentTotalReward;
-
-                if (episodeBuffer.length > 0) {
-                    await trainOnEpisode();
-                }
-
+                await trainOnEpisode();
                 updateDashboard();
                 drawMaze();
                 drawNNVisualizer();
 
-                if (isRunning) {
-                    animationId = requestAnimationFrame(() => runEpisode());
-                }
+                if (isRunning) animationId = requestAnimationFrame(runEpisode);
             }
 
-            function sampleFromDistribution(probs) {
-                let r = Math.random();
-                let cumulative = 0;
-                for (let i = 0; i < probs.length; i++) {
-                    cumulative += probs[i];
-                    if (r <= cumulative) return i;
-                }
+            function sample(probs) {
+                let r = Math.random(),
+                    cum = 0;
+                for (let i = 0; i < probs.length; i++) { cum += probs[i]; if (r <= cum) return i; }
                 return probs.length - 1;
             }
 
-            function sleep(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
-            }
-
-            // ==================== RENDERING: MAZE ====================
+            // ==================== RENDERING ====================
             function drawMaze() {
                 ctx.clearRect(0, 0, 480, 480);
-                // Draw cells with neon effect
                 for (let r = 0; r < GRID_SIZE; r++) {
                     for (let c = 0; c < GRID_SIZE; c++) {
-                        const x = c * CELL_SIZE;
-                        const y = r * CELL_SIZE;
+                        const x = c * CELL_SIZE,
+                            y = r * CELL_SIZE;
                         if (maze[r][c] === 1) {
                             ctx.fillStyle = '#1a1a30';
                             ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
@@ -981,16 +780,18 @@
                         }
                     }
                 }
-
-                // Draw sensors
-                const sensors = getSensors();
-                for (let i = 0; i < SENSOR_DIRS.length; i++) {
-                    const sd = SENSOR_DIRS[i];
-                    const sr = agentPos.r + sd.dr;
-                    const sc = agentPos.c + sd.dc;
-                    if (sr >= 0 && sr < GRID_SIZE && sc >= 0 && sc < GRID_SIZE) {
-                        const sx = sc * CELL_SIZE;
-                        const sy = sr * CELL_SIZE;
+                // sensors glow
+                const sensors = SENSOR_DIRS.map((d, i) => {
+                    const nr = agentPos.r + d.dr,
+                        nc = agentPos.c + d.dc;
+                    return (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) ? (maze[nr][nc] === 1 ? 1 : 0) : 1;
+                });
+                SENSOR_DIRS.forEach((d, i) => {
+                    const nr = agentPos.r + d.dr,
+                        nc = agentPos.c + d.dc;
+                    if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
+                        const sx = nc * CELL_SIZE,
+                            sy = nr * CELL_SIZE;
                         ctx.fillStyle = sensors[i] > 0.5 ? 'rgba(255,77,140,0.25)' : 'rgba(0,229,255,0.15)';
                         ctx.fillRect(sx + 2, sy + 2, CELL_SIZE - 4, CELL_SIZE - 4);
                         ctx.strokeStyle = sensors[i] > 0.5 ? '#ff4d8c88' : '#00e5ff44';
@@ -998,44 +799,40 @@
                         ctx.shadowBlur = 6;
                         ctx.shadowColor = sensors[i] > 0.5 ? '#ff4d8c' : '#00e5ff';
                         ctx.strokeRect(sx + 2, sy + 2, CELL_SIZE - 4, CELL_SIZE - 4);
-                        ctx.shadowColor = 'transparent';
                         ctx.shadowBlur = 0;
                     }
-                }
-
-                // Draw goal with glow
-                const gx = goalPos.c * CELL_SIZE;
-                const gy = goalPos.r * CELL_SIZE;
+                });
+                // goal glow
+                const gx = goalPos.c * CELL_SIZE,
+                    gy = goalPos.r * CELL_SIZE;
                 ctx.shadowColor = '#ffd700';
                 ctx.shadowBlur = 15;
-                const goalGrad = ctx.createRadialGradient(gx + CELL_SIZE / 2, gy + CELL_SIZE / 2, 4, gx + CELL_SIZE / 2, gy +
-                    CELL_SIZE / 2, CELL_SIZE / 2);
-                goalGrad.addColorStop(0, '#ffd700');
-                goalGrad.addColorStop(0.6, '#ff8c00');
-                goalGrad.addColorStop(1, '#ffd70000');
-                ctx.fillStyle = goalGrad;
+                const grad = ctx.createRadialGradient(gx + CELL_SIZE / 2, gy + CELL_SIZE / 2, 4, gx + CELL_SIZE / 2, gy + CELL_SIZE /
+                    2, CELL_SIZE / 2);
+                grad.addColorStop(0, '#ffd700');
+                grad.addColorStop(0.6, '#ff8c00');
+                grad.addColorStop(1, '#ffd70000');
+                ctx.fillStyle = grad;
                 ctx.beginPath();
                 ctx.arc(gx + CELL_SIZE / 2, gy + CELL_SIZE / 2, CELL_SIZE / 2 - 2, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.shadowBlur = 0;
-                ctx.shadowColor = 'transparent';
                 ctx.fillStyle = '#fff';
                 ctx.font = 'bold 14px "Segoe UI"';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('🏁', gx + CELL_SIZE / 2, gy + CELL_SIZE / 2);
-
-                // Draw agent with glow
-                const ax = agentPos.c * CELL_SIZE;
-                const ay = agentPos.r * CELL_SIZE;
+                // agent glow
+                const ax = agentPos.c * CELL_SIZE,
+                    ay = agentPos.r * CELL_SIZE;
                 ctx.shadowColor = '#00e5ff';
                 ctx.shadowBlur = 20;
-                const agentGrad = ctx.createRadialGradient(ax + CELL_SIZE / 2, ay + CELL_SIZE / 2, 3, ax + CELL_SIZE / 2, ay +
-                    CELL_SIZE / 2, CELL_SIZE / 2);
-                agentGrad.addColorStop(0, '#ffffff');
-                agentGrad.addColorStop(0.3, '#00e5ff');
-                agentGrad.addColorStop(1, '#00668000');
-                ctx.fillStyle = agentGrad;
+                const agrad = ctx.createRadialGradient(ax + CELL_SIZE / 2, ay + CELL_SIZE / 2, 3, ax + CELL_SIZE / 2, ay + CELL_SIZE /
+                    2, CELL_SIZE / 2);
+                agrad.addColorStop(0, '#fff');
+                agrad.addColorStop(0.3, '#00e5ff');
+                agrad.addColorStop(1, '#00668000');
+                ctx.fillStyle = agrad;
                 ctx.beginPath();
                 ctx.arc(ax + CELL_SIZE / 2, ay + CELL_SIZE / 2, CELL_SIZE / 2 - 3, 0, Math.PI * 2);
                 ctx.fill();
@@ -1043,12 +840,10 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 ctx.shadowBlur = 0;
-                ctx.shadowColor = 'transparent';
                 ctx.fillStyle = '#000';
                 ctx.font = 'bold 16px "Segoe UI"';
                 ctx.fillText('🤖', ax + CELL_SIZE / 2, ay + CELL_SIZE / 2);
-
-                // Grid lines subtle
+                // grid
                 ctx.strokeStyle = '#2a2a4a22';
                 ctx.lineWidth = 0.5;
                 for (let i = 0; i <= GRID_SIZE; i++) {
@@ -1062,131 +857,100 @@
                 }
             }
 
-            // ==================== RENDERING: NN VISUALIZER ====================
             function drawNNVisualizer() {
-                const w = nnCanvas.width;
-                const h = nnCanvas.height;
+                const w = nnCanvas.width,
+                    h = nnCanvas.height;
                 nnCtx.clearRect(0, 0, w, h);
                 nnCtx.fillStyle = '#0a0a1a';
                 nnCtx.fillRect(0, 0, w, h);
-
-                const layerPositions = [
+                const layers = [
                     { x: 30, label: 'مدخلات', size: 8, count: 12 },
                     { x: 90, label: 'H1 (500) عينة', size: 5, count: 20 },
                     { x: 150, label: 'H2 (10)', size: 7, count: 10 },
                     { x: 210, label: 'مخرجات', size: 9, count: 4 }
                 ];
-
-                const centerY = h / 2;
-                const spacingY = 20;
-
-                // Draw connections (simplified)
+                const centerY = h / 2,
+                    spacingY = 20;
                 nnCtx.strokeStyle = '#2a2a4a44';
                 nnCtx.lineWidth = 0.5;
-                for (let i = 0; i < layerPositions.length - 1; i++) {
-                    const curr = layerPositions[i];
-                    const next = layerPositions[i + 1];
-                    for (let j = 0; j < curr.count; j++) {
-                        const y1 = centerY - (curr.count * spacingY) / 2 + j * spacingY + spacingY / 2;
-                        for (let k = 0; k < next.count; k++) {
-                            const y2 = centerY - (next.count * spacingY) / 2 + k * spacingY + spacingY / 2;
+                for (let i = 0; i < layers.length - 1; i++) {
+                    for (let j = 0; j < layers[i].count; j++) {
+                        const y1 = centerY - (layers[i].count * spacingY) / 2 + j * spacingY + spacingY / 2;
+                        for (let k = 0; k < layers[i + 1].count; k++) {
+                            const y2 = centerY - (layers[i + 1].count * spacingY) / 2 + k * spacingY + spacingY / 2;
                             nnCtx.beginPath();
-                            nnCtx.moveTo(curr.x + curr.size, y1);
-                            nnCtx.lineTo(next.x - next.size, y2);
+                            nnCtx.moveTo(layers[i].x + layers[i].size, y1);
+                            nnCtx.lineTo(layers[i + 1].x - layers[i + 1].size, y2);
                             nnCtx.stroke();
                         }
                     }
                 }
-
-                // Draw nodes
-                layerPositions.forEach((layer, idx) => {
-                    let values;
-                    if (idx === 0) {
-                        // Input layer: use last state if available
-                        const state = lastStateForVis || new Array(12).fill(0);
-                        values = state.slice(0, 12);
-                    } else if (idx === 1) {
-                        values = currentActivations.dense1;
-                    } else if (idx === 2) {
-                        values = currentActivations.dense2;
-                    } else if (idx === 3) {
-                        values = currentActivations.output;
-                    }
-                    if (!values || values.length < layer.count) values = new Array(layer.count).fill(0);
-
+                const values = [
+                    getState(),
+                    currentActivations.dense1,
+                    currentActivations.dense2,
+                    currentActivations.output
+                ];
+                layers.forEach((layer, idx) => {
+                    const vals = values[idx] || new Array(layer.count).fill(0);
                     for (let j = 0; j < layer.count; j++) {
                         const y = centerY - (layer.count * spacingY) / 2 + j * spacingY + spacingY / 2;
-                        const x = layer.x;
-                        const intensity = Math.min(1, Math.abs(values[j] || 0));
+                        const intensity = Math.min(1, Math.abs(vals[j] || 0));
                         let color;
-                        if (idx === 3 && currentActionIndex >= 0 && j === currentActionIndex) {
+                        if (idx === 3 && currentActionIndex === j) {
                             color = '#ff4d8c';
                             nnCtx.shadowColor = '#ff4d8c';
                             nnCtx.shadowBlur = 12;
                         } else {
-                            const r = Math.floor(100 + intensity * 155);
-                            const g = Math.floor(100 + intensity * 100);
-                            const b = Math.floor(200 + intensity * 55);
-                            color = `rgb(${r},${g},${b})`;
+                            color = `rgb(${100+intensity*155},${100+intensity*100},${200+intensity*55})`;
                             nnCtx.shadowColor = 'transparent';
                             nnCtx.shadowBlur = 0;
                         }
                         nnCtx.fillStyle = color;
                         nnCtx.beginPath();
-                        nnCtx.arc(x, y, layer.size, 0, Math.PI * 2);
+                        nnCtx.arc(layer.x, y, layer.size, 0, Math.PI * 2);
                         nnCtx.fill();
                         nnCtx.strokeStyle = '#ffffff33';
                         nnCtx.lineWidth = 0.8;
                         nnCtx.stroke();
-                        nnCtx.shadowColor = 'transparent';
-                        nnCtx.shadowBlur = 0;
                     }
-                    // Label
+                    nnCtx.shadowBlur = 0;
                     nnCtx.fillStyle = '#a0a0c0';
                     nnCtx.font = '8px "Segoe UI"';
                     nnCtx.textAlign = 'center';
                     nnCtx.fillText(layer.label, layer.x, h - 5);
                 });
-
-                // Highlight output direction arrow
                 if (currentActionIndex >= 0) {
-                    const outLayer = layerPositions[3];
+                    const outLayer = layers[3];
                     const y = centerY - (outLayer.count * spacingY) / 2 + currentActionIndex * spacingY + spacingY / 2;
-                    const arrowX = outLayer.x + 25;
-                    nnCtx.fillStyle = '#ff4d8c';
                     nnCtx.shadowColor = '#ff4d8c';
                     nnCtx.shadowBlur = 10;
+                    nnCtx.fillStyle = '#ff4d8c';
                     nnCtx.beginPath();
-                    nnCtx.moveTo(arrowX, y - 6);
-                    nnCtx.lineTo(arrowX + 12, y);
-                    nnCtx.lineTo(arrowX, y + 6);
-                    nnCtx.closePath();
+                    nnCtx.moveTo(outLayer.x + 25, y - 6);
+                    nnCtx.lineTo(outLayer.x + 37, y);
+                    nnCtx.lineTo(outLayer.x + 25, y + 6);
                     nnCtx.fill();
-                    nnCtx.shadowBlur = 0;
-                    nnCtx.shadowColor = 'transparent';
                 }
+                nnCtx.shadowBlur = 0;
             }
 
-            // ==================== DASHBOARD UPDATE ====================
             function updateDashboard() {
                 episodeNumEl.textContent = episodeCount;
                 totalRewardEl.textContent = totalRewardAccum.toFixed(2);
                 lossValueEl.textContent = lastLoss !== null ? lastLoss.toFixed(4) : '---';
-                const rate = episodeCount > 0 ? ((successCount / episodeCount) * 100).toFixed(1) : '0.0';
-                successRateEl.textContent = rate + '%';
+                successRateEl.textContent = episodeCount > 0 ? ((successCount / episodeCount) * 100).toFixed(1) + '%' :
+                '0.0%';
                 stepCountEl.textContent = currentSteps;
-                // Trigger NN redraw with latest values
                 drawNNVisualizer();
             }
 
-            // ==================== CONTROL BUTTONS ====================
+            // ==================== CONTROL ====================
             function startTraining() {
                 if (isRunning) return;
                 isRunning = true;
                 btnStartStop.textContent = '⏸️ إيقاف';
-                btnStartStop.classList.remove('primary');
-                btnStartStop.classList.add('danger');
-                if (wallChangeTimer) clearInterval(wallChangeTimer);
+                btnStartStop.classList.replace('primary', 'danger');
                 wallChangeTimer = setInterval(changeRandomWalls, WALL_CHANGE_INTERVAL_MS);
                 runEpisode();
             }
@@ -1194,16 +958,9 @@
             function stopTraining() {
                 isRunning = false;
                 btnStartStop.textContent = '▶ ابدأ التدريب';
-                btnStartStop.classList.add('primary');
-                btnStartStop.classList.remove('danger');
-                if (wallChangeTimer) {
-                    clearInterval(wallChangeTimer);
-                    wallChangeTimer = null;
-                }
-                if (animationId) {
-                    cancelAnimationFrame(animationId);
-                    animationId = null;
-                }
+                btnStartStop.classList.replace('danger', 'primary');
+                clearInterval(wallChangeTimer);
+                cancelAnimationFrame(animationId);
             }
 
             async function resetAll() {
@@ -1216,13 +973,11 @@
                 successCount = 0;
                 episodeBuffer = [];
                 currentActionIndex = -1;
-                currentActivations = {
-                    dense1: new Array(20).fill(0),
-                    dense2: new Array(10).fill(0),
-                    output: new Array(4).fill(0)
-                };
+                currentActivations = { dense1: new Array(20).fill(0), dense2: new Array(10).fill(0), output: new Array(4).fill(
+                        0) };
                 model.dispose();
                 model = buildModel();
+                activationModels = createActivationModels();
                 initializeMaze();
                 agentPos = { r: 0, c: 0 };
                 updateDashboard();
@@ -1231,50 +986,25 @@
                 updateDBStatus('loading', 'نموذج جديد');
             }
 
-            // Event listeners
-            btnStartStop.addEventListener('click', () => {
-                if (isRunning) stopTraining();
-                else startTraining();
-            });
+            btnStartStop.addEventListener('click', () => isRunning ? stopTraining() : startTraining());
+            btnReset.addEventListener('click', resetAll);
+            btnSaveWeights.addEventListener('click', () => saveWeightsToDB(model));
+            btnLoadWeights.addEventListener('click', async () => { await loadWeightsFromDB(model);
+                updateDashboard(); });
+            btnClearDB.addEventListener('click', async () => { await clearDB();
+                updateDBStatus('loading', 'تم المسح'); });
 
-            btnReset.addEventListener('click', async () => {
-                await resetAll();
-            });
-
-            btnSaveWeights.addEventListener('click', async () => {
-                await saveWeightsToDB(model);
-            });
-
-            btnLoadWeights.addEventListener('click', async () => {
-                const loaded = await loadWeightsFromDB(model);
-                if (loaded) {
-                    updateDashboard();
-                }
-            });
-
-            btnClearDB.addEventListener('click', async () => {
-                await clearDB();
-                updateDBStatus('loading', 'تم المسح');
-            });
-
-            // ==================== INITIALIZATION ====================
+            // ==================== START ====================
             async function init() {
                 initializeMaze();
                 drawMaze();
                 drawNNVisualizer();
                 updateDashboard();
                 updateDBStatus('loading', 'جاري التحقق...');
-                const loaded = await loadWeightsFromDB(model);
-                if (!loaded) {
-                    updateDBStatus('loading', 'نموذج جديد');
-                }
-                console.log('🚀 Cyberpunk Maze RL launched');
+                if (!await loadWeightsFromDB(model)) updateDBStatus('loading', 'نموذج جديد');
             }
-
-            init().catch(err => {
-                console.error('Initialization error:', err);
-                updateDBStatus('error', 'خطأ في التهيئة');
-            });
+            init().catch(err => { console.error('Initialization error:', err);
+                updateDBStatus('error', 'خطأ في التهيئة'); });
         })();
     </script>
 </body>
