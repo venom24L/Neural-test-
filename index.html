@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متاهة التعلم المعزز - Cyberpunk RL v2.0</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js">
-    </script>
+    <title>متاهة التعلم المعزز - Cyberpunk RL v2.1</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
     <style>
         :root {
             --bg: #050510;
@@ -28,11 +27,7 @@
             --neon-purple: #b84dff;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             background: var(--bg);
@@ -152,20 +147,13 @@
             align-items: center;
             transition: all 0.3s ease;
         }
-        .stat-card:hover {
-            border-color: var(--accent);
-            box-shadow: 0 0 20px rgba(157, 78, 255, 0.2);
-        }
-        .stat-label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
+        .stat-card:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(157, 78, 255, 0.2); }
+        .stat-label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
         .stat-value {
             font-size: 1.1rem;
             font-weight: 700;
             color: var(--text);
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255,255,255,0.04);
             padding: 4px 10px;
             border-radius: 20px;
             min-width: 50px;
@@ -403,8 +391,7 @@
                     })));
                     const tx = db.transaction(DB_STORE_NAME, 'readwrite');
                     tx.objectStore(DB_STORE_NAME).put({ weights: weightData, timestamp: Date.now() }, 'latest');
-                    await new Promise((resolve, reject) => { tx.oncomplete = resolve;
-                        tx.onerror = reject; });
+                    await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = reject; });
                     db.close();
                     updateDBStatus('saved', 'محفوظ ✅');
                 } catch (err) {
@@ -446,14 +433,14 @@
                     const db = await openDB();
                     const tx = db.transaction(DB_STORE_NAME, 'readwrite');
                     tx.objectStore(DB_STORE_NAME).clear();
-                    await new Promise((resolve, reject) => { tx.oncomplete = resolve;
-                        tx.onerror = reject; });
+                    await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = reject; });
                     db.close();
                     updateDBStatus('loading', 'تم المسح');
                 } catch (err) { console.error('فشل مسح DB:', err); }
             }
 
             function updateDBStatus(status, text) {
+                if (!dbDot || !dbText) return;
                 dbDot.className = 'db-dot ' + status;
                 dbText.textContent = text;
                 dbReady = (status === 'saved' || status === 'loading');
@@ -462,20 +449,16 @@
             // ==================== NEURAL NETWORK ====================
             function buildModel() {
                 const input = tf.input({ shape: [STATE_DIM] });
-                const dense1 = tf.layers.dense({ units: HIDDEN1_UNITS, activation: 'relu', kernelInitializer: 'glorotUniform',
-                    name: 'dense1' }).apply(input);
+                const dense1 = tf.layers.dense({ units: HIDDEN1_UNITS, activation: 'relu', kernelInitializer: 'glorotUniform', name: 'dense1' }).apply(input);
                 const dropout1 = tf.layers.dropout({ rate: DROPOUT_RATE, name: 'dropout1' }).apply(dense1);
-                const dense2 = tf.layers.dense({ units: HIDDEN2_UNITS, activation: 'relu', kernelInitializer: 'glorotUniform',
-                    name: 'dense2' }).apply(dropout1);
-                const output = tf.layers.dense({ units: ACTION_DIM, activation: 'softmax', kernelInitializer: 'glorotUniform',
-                    name: 'output' }).apply(dense2);
+                const dense2 = tf.layers.dense({ units: HIDDEN2_UNITS, activation: 'relu', kernelInitializer: 'glorotUniform', name: 'dense2' }).apply(dropout1);
+                const output = tf.layers.dense({ units: ACTION_DIM, activation: 'softmax', kernelInitializer: 'glorotUniform', name: 'output' }).apply(dense2);
                 const model = tf.model({ inputs: input, outputs: output });
                 model.compile({ optimizer: tf.train.adam(LEARNING_RATE), loss: 'categoricalCrossentropy' });
                 return model;
             }
 
             let model = buildModel();
-            // Activation extraction models (created once)
             let activationModels = createActivationModels();
 
             function createActivationModels() {
@@ -506,17 +489,12 @@
             // ==================== MAZE ====================
             function createBaseMaze() {
                 const m = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
-                for (let r = 0; r < GRID_SIZE; r++) { m[r][0] = 1;
-                    m[r][GRID_SIZE - 1] = 1; }
-                for (let c = 0; c < GRID_SIZE; c++) { m[0][c] = 1;
-                    m[GRID_SIZE - 1][c] = 1; }
-                m[0][0] = 0;
-                m[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                for (let r = 0; r < GRID_SIZE; r++) { m[r][0] = 1; m[r][GRID_SIZE - 1] = 1; }
+                for (let c = 0; c < GRID_SIZE; c++) { m[0][c] = 1; m[GRID_SIZE - 1][c] = 1; }
+                m[0][0] = 0; m[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
                 if (GRID_SIZE > 2) {
-                    m[0][1] = 0;
-                    m[1][0] = 0;
-                    m[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
-                    m[GRID_SIZE - 2][GRID_SIZE - 1] = 0;
+                    m[0][1] = 0; m[1][0] = 0;
+                    m[GRID_SIZE - 1][GRID_SIZE - 2] = 0; m[GRID_SIZE - 2][GRID_SIZE - 1] = 0;
                 }
                 return m;
             }
@@ -529,8 +507,7 @@
                     const { r, c } = queue.shift();
                     if (r === er && c === ec) return true;
                     for (const d of DIRS) {
-                        const nr = r + d.dr,
-                            nc = c + d.dc;
+                        const nr = r + d.dr, nc = c + d.dc;
                         if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && !visited[nr][nc] && m[nr][nc] === 0) {
                             visited[nr][nc] = true;
                             queue.push({ r: nr, c: nc });
@@ -545,31 +522,21 @@
                 for (let r = 1; r < GRID_SIZE - 1; r++)
                     for (let c = 1; c < GRID_SIZE - 1; c++)
                         if (!(r === 0 && c === 0) && !(r === GRID_SIZE - 1 && c === GRID_SIZE - 1)) m[r][c] = 0;
-                m[0][0] = 0;
-                m[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
-                if (GRID_SIZE > 2) { m[0][1] = 0;
-                    m[1][0] = 0;
-                    m[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
-                    m[GRID_SIZE - 2][GRID_SIZE - 1] = 0; }
+                m[0][0] = 0; m[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                if (GRID_SIZE > 2) { m[0][1] = 0; m[1][0] = 0; m[GRID_SIZE - 1][GRID_SIZE - 2] = 0; m[GRID_SIZE - 2][GRID_SIZE - 1] = 0; }
                 const density = 0.25 + Math.random() * 0.2;
                 for (let r = 1; r < GRID_SIZE - 1; r++)
                     for (let c = 1; c < GRID_SIZE - 1; c++)
-                        if ((r !== 0 || c !== 0) && (r !== GRID_SIZE - 1 || c !== GRID_SIZE - 1) && Math.random() < density) m[
-                            r][c] = 1;
-                m[0][0] = 0;
-                m[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
-                if (GRID_SIZE > 2) { m[0][1] = 0;
-                    m[1][0] = 0;
-                    m[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
-                    m[GRID_SIZE - 2][GRID_SIZE - 1] = 0; }
+                        if ((r !== 0 || c !== 0) && (r !== GRID_SIZE - 1 || c !== GRID_SIZE - 1) && Math.random() < density) m[r][c] = 1;
+                m[0][0] = 0; m[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                if (GRID_SIZE > 2) { m[0][1] = 0; m[1][0] = 0; m[GRID_SIZE - 1][GRID_SIZE - 2] = 0; m[GRID_SIZE - 2][GRID_SIZE - 1] = 0; }
                 if (!pathExists(m, 0, 0, GRID_SIZE - 1, GRID_SIZE - 1)) return createGuaranteedPath(m);
                 return m;
             }
 
             function createGuaranteedPath(m) {
                 const newM = m.map(r => [...r]);
-                let r = 0,
-                    c = 0;
+                let r = 0, c = 0;
                 for (let i = 0; i < 500; i++) {
                     if (r === GRID_SIZE - 1 && c === GRID_SIZE - 1) break;
                     newM[r][c] = 0;
@@ -582,12 +549,8 @@
                     r = Math.min(Math.max(r + sel.dr, 0), GRID_SIZE - 1);
                     c = Math.min(Math.max(c + sel.dc, 0), GRID_SIZE - 1);
                 }
-                newM[0][0] = 0;
-                newM[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
-                if (GRID_SIZE > 2) { newM[0][1] = 0;
-                    newM[1][0] = 0;
-                    newM[GRID_SIZE - 1][GRID_SIZE - 2] = 0;
-                    newM[GRID_SIZE - 2][GRID_SIZE - 1] = 0; }
+                newM[0][0] = 0; newM[GRID_SIZE - 1][GRID_SIZE - 1] = 0;
+                if (GRID_SIZE > 2) { newM[0][1] = 0; newM[1][0] = 0; newM[GRID_SIZE - 1][GRID_SIZE - 2] = 0; newM[GRID_SIZE - 2][GRID_SIZE - 1] = 0; }
                 return newM;
             }
 
@@ -604,8 +567,7 @@
                 maze = generateRandomInternalWalls(base);
                 if (maze[agentPos.r][agentPos.c] === 1) {
                     const near = findNearestOpen(agentPos.r, agentPos.c);
-                    if (near) { agentPos.r = near.r;
-                        agentPos.c = near.c; }
+                    if (near) { agentPos.r = near.r; agentPos.c = near.c; }
                 }
             }
 
@@ -617,8 +579,7 @@
                     const cur = queue.shift();
                     if (maze[cur.r][cur.c] === 0) return { r: cur.r, c: cur.c };
                     for (const d of DIRS) {
-                        const nr = cur.r + d.dr,
-                            nc = cur.c + d.dc;
+                        const nr = cur.r + d.dr, nc = cur.c + d.dc;
                         if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && !visited[nr][nc]) {
                             visited[nr][nc] = true;
                             queue.push({ r: nr, c: nc });
@@ -630,28 +591,22 @@
 
             function getState() {
                 const sensors = SENSOR_DIRS.map(d => {
-                    const nr = agentPos.r + d.dr,
-                        nc = agentPos.c + d.dc;
-                    return (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) ? 1.0 : (maze[nr][nc] === 1 ? 1.0 :
-                        0.0);
+                    const nr = agentPos.r + d.dr, nc = agentPos.c + d.dc;
+                    return (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) ? 1.0 : (maze[nr][nc] === 1 ? 1.0 : 0.0);
                 });
-                return [...sensors, agentPos.r / (GRID_SIZE - 1), agentPos.c / (GRID_SIZE - 1), goalPos.r / (GRID_SIZE -
-                    1), goalPos.c / (GRID_SIZE - 1)];
+                return [...sensors, agentPos.r / (GRID_SIZE - 1), agentPos.c / (GRID_SIZE - 1), goalPos.r / (GRID_SIZE - 1), goalPos.c / (GRID_SIZE - 1)];
             }
 
             function takeAction(actionIdx) {
                 const d = DIRS[actionIdx];
-                const nr = agentPos.r + d.dr,
-                    nc = agentPos.c + d.dc;
-                let reward = -0.01,
-                    done = false;
+                const nr = agentPos.r + d.dr, nc = agentPos.c + d.dc;
+                let reward = -0.01, done = false;
                 if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE || maze[nr][nc] === 1) {
                     reward = -0.1;
                 } else {
                     agentPos.r = nr;
                     agentPos.c = nc;
-                    if (agentPos.r === goalPos.r && agentPos.c === goalPos.c) { reward = 10.0;
-                        done = true; }
+                    if (agentPos.r === goalPos.r && agentPos.c === goalPos.c) { reward = 10.0; done = true; }
                 }
                 const prevDist = Math.abs(agentPos.r - goalPos.r) + Math.abs(agentPos.c - goalPos.c);
                 const actR = (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) ? agentPos.r : nr;
@@ -666,8 +621,8 @@
                 const disc = new Array(rewards.length).fill(0);
                 let cum = 0;
                 for (let i = rewards.length - 1; i >= 0; i--) cum = rewards[i] + GAMMA * cum, disc[i] = cum;
-                const mean = disc.reduce((a, b) => a + b, 0) / disc.length;
-                const std = Math.sqrt(disc.reduce((a, b) => a + (b - mean) ** 2, 0) / disc.length) || 1;
+                const mean = disc.reduce((a,b) => a + b, 0) / disc.length;
+                const std = Math.sqrt(disc.reduce((a,b) => a + (b - mean) ** 2, 0) / disc.length) || 1;
                 return disc.map(v => (v - mean) / std);
             }
 
@@ -734,11 +689,23 @@
                     if (delay > 5 && isRunning) await new Promise(r => setTimeout(r, delay));
                 }
 
-                if (done) { successCount++;
-                    totalRewardAccum += currentTotalReward; if (dbReady) saveWeightsToDB(model).catch(console.warn); }
+                // تحديث الإحصائيات بعد انتهاء المحاولة
+                if (done) {
+                    successCount++;
+                }
                 episodeCount++;
+                // إضافة المكافأة للإجمالي مرة واحدة فقط
                 totalRewardAccum += currentTotalReward;
+                
+                // حفظ تلقائي بعد الفوز إذا كانت قاعدة البيانات جاهزة
+                if (done && dbReady) {
+                    saveWeightsToDB(model).catch(console.warn);
+                }
+
+                // تدريب النموذج على المحاولة
                 await trainOnEpisode();
+                
+                // تحديث الداشبورد بعد التدريب
                 updateDashboard();
                 drawMaze();
                 drawNNVisualizer();
@@ -747,8 +714,7 @@
             }
 
             function sample(probs) {
-                let r = Math.random(),
-                    cum = 0;
+                let r = Math.random(), cum = 0;
                 for (let i = 0; i < probs.length; i++) { cum += probs[i]; if (r <= cum) return i; }
                 return probs.length - 1;
             }
@@ -758,189 +724,128 @@
                 ctx.clearRect(0, 0, 480, 480);
                 for (let r = 0; r < GRID_SIZE; r++) {
                     for (let c = 0; c < GRID_SIZE; c++) {
-                        const x = c * CELL_SIZE,
-                            y = r * CELL_SIZE;
+                        const x = c * CELL_SIZE, y = r * CELL_SIZE;
                         if (maze[r][c] === 1) {
-                            ctx.fillStyle = '#1a1a30';
-                            ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
-                            ctx.fillStyle = '#2d2d50';
-                            ctx.fillRect(x + 3, y + 3, CELL_SIZE - 6, CELL_SIZE - 6);
-                            ctx.shadowColor = '#ff4d8c44';
-                            ctx.shadowBlur = 4;
-                            ctx.strokeStyle = '#ff4d8c55';
-                            ctx.lineWidth = 1;
-                            ctx.strokeRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
-                            ctx.shadowColor = 'transparent';
-                            ctx.shadowBlur = 0;
+                            ctx.fillStyle = '#1a1a30'; ctx.fillRect(x+1,y+1,CELL_SIZE-2,CELL_SIZE-2);
+                            ctx.fillStyle = '#2d2d50'; ctx.fillRect(x+3,y+3,CELL_SIZE-6,CELL_SIZE-6);
+                            ctx.shadowColor = '#ff4d8c44'; ctx.shadowBlur = 4;
+                            ctx.strokeStyle = '#ff4d8c55'; ctx.lineWidth = 1;
+                            ctx.strokeRect(x+2,y+2,CELL_SIZE-4,CELL_SIZE-4);
+                            ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
                         } else {
-                            ctx.fillStyle = '#0c0c1a';
-                            ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
-                            ctx.fillStyle = '#15152a';
-                            ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                            ctx.fillStyle = '#0c0c1a'; ctx.fillRect(x+1,y+1,CELL_SIZE-2,CELL_SIZE-2);
+                            ctx.fillStyle = '#15152a'; ctx.fillRect(x+2,y+2,CELL_SIZE-4,CELL_SIZE-4);
                         }
                     }
                 }
                 // sensors glow
-                const sensors = SENSOR_DIRS.map((d, i) => {
-                    const nr = agentPos.r + d.dr,
-                        nc = agentPos.c + d.dc;
+                const sensors = SENSOR_DIRS.map(d => {
+                    const nr = agentPos.r + d.dr, nc = agentPos.c + d.dc;
                     return (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) ? (maze[nr][nc] === 1 ? 1 : 0) : 1;
                 });
                 SENSOR_DIRS.forEach((d, i) => {
-                    const nr = agentPos.r + d.dr,
-                        nc = agentPos.c + d.dc;
+                    const nr = agentPos.r + d.dr, nc = agentPos.c + d.dc;
                     if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
-                        const sx = nc * CELL_SIZE,
-                            sy = nr * CELL_SIZE;
+                        const sx = nc * CELL_SIZE, sy = nr * CELL_SIZE;
                         ctx.fillStyle = sensors[i] > 0.5 ? 'rgba(255,77,140,0.25)' : 'rgba(0,229,255,0.15)';
-                        ctx.fillRect(sx + 2, sy + 2, CELL_SIZE - 4, CELL_SIZE - 4);
-                        ctx.strokeStyle = sensors[i] > 0.5 ? '#ff4d8c88' : '#00e5ff44';
-                        ctx.lineWidth = 1;
-                        ctx.shadowBlur = 6;
-                        ctx.shadowColor = sensors[i] > 0.5 ? '#ff4d8c' : '#00e5ff';
-                        ctx.strokeRect(sx + 2, sy + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                        ctx.fillRect(sx+2, sy+2, CELL_SIZE-4, CELL_SIZE-4);
+                        ctx.strokeStyle = sensors[i] > 0.5 ? '#ff4d8c88' : '#00e5ff44'; ctx.lineWidth = 1;
+                        ctx.shadowBlur = 6; ctx.shadowColor = sensors[i] > 0.5 ? '#ff4d8c' : '#00e5ff';
+                        ctx.strokeRect(sx+2, sy+2, CELL_SIZE-4, CELL_SIZE-4);
                         ctx.shadowBlur = 0;
                     }
                 });
                 // goal glow
-                const gx = goalPos.c * CELL_SIZE,
-                    gy = goalPos.r * CELL_SIZE;
-                ctx.shadowColor = '#ffd700';
-                ctx.shadowBlur = 15;
-                const grad = ctx.createRadialGradient(gx + CELL_SIZE / 2, gy + CELL_SIZE / 2, 4, gx + CELL_SIZE / 2, gy + CELL_SIZE /
-                    2, CELL_SIZE / 2);
-                grad.addColorStop(0, '#ffd700');
-                grad.addColorStop(0.6, '#ff8c00');
-                grad.addColorStop(1, '#ffd70000');
+                const gx = goalPos.c * CELL_SIZE, gy = goalPos.r * CELL_SIZE;
+                ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 15;
+                const grad = ctx.createRadialGradient(gx+CELL_SIZE/2, gy+CELL_SIZE/2, 4, gx+CELL_SIZE/2, gy+CELL_SIZE/2, CELL_SIZE/2);
+                grad.addColorStop(0,'#ffd700'); grad.addColorStop(0.6,'#ff8c00'); grad.addColorStop(1,'#ffd70000');
                 ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.arc(gx + CELL_SIZE / 2, gy + CELL_SIZE / 2, CELL_SIZE / 2 - 2, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(gx+CELL_SIZE/2, gy+CELL_SIZE/2, CELL_SIZE/2-2, 0, Math.PI*2); ctx.fill();
                 ctx.shadowBlur = 0;
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 14px "Segoe UI"';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🏁', gx + CELL_SIZE / 2, gy + CELL_SIZE / 2);
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 14px "Segoe UI"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('🏁', gx+CELL_SIZE/2, gy+CELL_SIZE/2);
                 // agent glow
-                const ax = agentPos.c * CELL_SIZE,
-                    ay = agentPos.r * CELL_SIZE;
-                ctx.shadowColor = '#00e5ff';
-                ctx.shadowBlur = 20;
-                const agrad = ctx.createRadialGradient(ax + CELL_SIZE / 2, ay + CELL_SIZE / 2, 3, ax + CELL_SIZE / 2, ay + CELL_SIZE /
-                    2, CELL_SIZE / 2);
-                agrad.addColorStop(0, '#fff');
-                agrad.addColorStop(0.3, '#00e5ff');
-                agrad.addColorStop(1, '#00668000');
+                const ax = agentPos.c * CELL_SIZE, ay = agentPos.r * CELL_SIZE;
+                ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 20;
+                const agrad = ctx.createRadialGradient(ax+CELL_SIZE/2, ay+CELL_SIZE/2, 3, ax+CELL_SIZE/2, ay+CELL_SIZE/2, CELL_SIZE/2);
+                agrad.addColorStop(0,'#fff'); agrad.addColorStop(0.3,'#00e5ff'); agrad.addColorStop(1,'#00668000');
                 ctx.fillStyle = agrad;
-                ctx.beginPath();
-                ctx.arc(ax + CELL_SIZE / 2, ay + CELL_SIZE / 2, CELL_SIZE / 2 - 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#00e5ff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                ctx.beginPath(); ctx.arc(ax+CELL_SIZE/2, ay+CELL_SIZE/2, CELL_SIZE/2-3, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 2; ctx.stroke();
                 ctx.shadowBlur = 0;
-                ctx.fillStyle = '#000';
-                ctx.font = 'bold 16px "Segoe UI"';
-                ctx.fillText('🤖', ax + CELL_SIZE / 2, ay + CELL_SIZE / 2);
+                ctx.fillStyle = '#000'; ctx.font = 'bold 16px "Segoe UI"'; ctx.fillText('🤖', ax+CELL_SIZE/2, ay+CELL_SIZE/2);
                 // grid
-                ctx.strokeStyle = '#2a2a4a22';
-                ctx.lineWidth = 0.5;
+                ctx.strokeStyle = '#2a2a4a22'; ctx.lineWidth = 0.5;
                 for (let i = 0; i <= GRID_SIZE; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(i * CELL_SIZE, 0);
-                    ctx.lineTo(i * CELL_SIZE, 480);
-                    ctx.stroke();
-                    ctx.moveTo(0, i * CELL_SIZE);
-                    ctx.lineTo(480, i * CELL_SIZE);
-                    ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(i*CELL_SIZE, 0); ctx.lineTo(i*CELL_SIZE, 480); ctx.stroke();
+                    ctx.moveTo(0, i*CELL_SIZE); ctx.lineTo(480, i*CELL_SIZE); ctx.stroke();
                 }
             }
 
             function drawNNVisualizer() {
-                const w = nnCanvas.width,
-                    h = nnCanvas.height;
-                nnCtx.clearRect(0, 0, w, h);
-                nnCtx.fillStyle = '#0a0a1a';
-                nnCtx.fillRect(0, 0, w, h);
+                const w = nnCanvas.width, h = nnCanvas.height;
+                nnCtx.clearRect(0,0,w,h);
+                nnCtx.fillStyle = '#0a0a1a'; nnCtx.fillRect(0,0,w,h);
                 const layers = [
-                    { x: 30, label: 'مدخلات', size: 8, count: 12 },
-                    { x: 90, label: 'H1 (500) عينة', size: 5, count: 20 },
-                    { x: 150, label: 'H2 (10)', size: 7, count: 10 },
-                    { x: 210, label: 'مخرجات', size: 9, count: 4 }
+                    { x:30, label:'مدخلات', size:8, count:12 },
+                    { x:90, label:'H1 (500) عينة', size:5, count:20 },
+                    { x:150, label:'H2 (10)', size:7, count:10 },
+                    { x:210, label:'مخرجات', size:9, count:4 }
                 ];
-                const centerY = h / 2,
-                    spacingY = 20;
-                nnCtx.strokeStyle = '#2a2a4a44';
-                nnCtx.lineWidth = 0.5;
-                for (let i = 0; i < layers.length - 1; i++) {
-                    for (let j = 0; j < layers[i].count; j++) {
-                        const y1 = centerY - (layers[i].count * spacingY) / 2 + j * spacingY + spacingY / 2;
-                        for (let k = 0; k < layers[i + 1].count; k++) {
-                            const y2 = centerY - (layers[i + 1].count * spacingY) / 2 + k * spacingY + spacingY / 2;
+                const centerY = h/2, spacingY = 20;
+                nnCtx.strokeStyle = '#2a2a4a44'; nnCtx.lineWidth = 0.5;
+                for (let i=0; i<layers.length-1; i++) {
+                    for (let j=0; j<layers[i].count; j++) {
+                        const y1 = centerY - (layers[i].count*spacingY)/2 + j*spacingY + spacingY/2;
+                        for (let k=0; k<layers[i+1].count; k++) {
+                            const y2 = centerY - (layers[i+1].count*spacingY)/2 + k*spacingY + spacingY/2;
                             nnCtx.beginPath();
-                            nnCtx.moveTo(layers[i].x + layers[i].size, y1);
-                            nnCtx.lineTo(layers[i + 1].x - layers[i + 1].size, y2);
+                            nnCtx.moveTo(layers[i].x+layers[i].size, y1);
+                            nnCtx.lineTo(layers[i+1].x-layers[i+1].size, y2);
                             nnCtx.stroke();
                         }
                     }
                 }
-                const values = [
-                    getState(),
-                    currentActivations.dense1,
-                    currentActivations.dense2,
-                    currentActivations.output
-                ];
+                const values = [ getState(), currentActivations.dense1, currentActivations.dense2, currentActivations.output ];
                 layers.forEach((layer, idx) => {
                     const vals = values[idx] || new Array(layer.count).fill(0);
-                    for (let j = 0; j < layer.count; j++) {
-                        const y = centerY - (layer.count * spacingY) / 2 + j * spacingY + spacingY / 2;
-                        const intensity = Math.min(1, Math.abs(vals[j] || 0));
+                    for (let j=0; j<layer.count; j++) {
+                        const y = centerY - (layer.count*spacingY)/2 + j*spacingY + spacingY/2;
+                        const intensity = Math.min(1, Math.abs(vals[j]||0));
                         let color;
-                        if (idx === 3 && currentActionIndex === j) {
-                            color = '#ff4d8c';
-                            nnCtx.shadowColor = '#ff4d8c';
-                            nnCtx.shadowBlur = 12;
+                        if (idx===3 && currentActionIndex===j) {
+                            color = '#ff4d8c'; nnCtx.shadowColor = '#ff4d8c'; nnCtx.shadowBlur = 12;
                         } else {
                             color = `rgb(${100+intensity*155},${100+intensity*100},${200+intensity*55})`;
-                            nnCtx.shadowColor = 'transparent';
-                            nnCtx.shadowBlur = 0;
+                            nnCtx.shadowColor = 'transparent'; nnCtx.shadowBlur = 0;
                         }
                         nnCtx.fillStyle = color;
-                        nnCtx.beginPath();
-                        nnCtx.arc(layer.x, y, layer.size, 0, Math.PI * 2);
-                        nnCtx.fill();
-                        nnCtx.strokeStyle = '#ffffff33';
-                        nnCtx.lineWidth = 0.8;
-                        nnCtx.stroke();
+                        nnCtx.beginPath(); nnCtx.arc(layer.x, y, layer.size, 0, Math.PI*2); nnCtx.fill();
+                        nnCtx.strokeStyle = '#ffffff33'; nnCtx.lineWidth = 0.8; nnCtx.stroke();
                     }
                     nnCtx.shadowBlur = 0;
-                    nnCtx.fillStyle = '#a0a0c0';
-                    nnCtx.font = '8px "Segoe UI"';
-                    nnCtx.textAlign = 'center';
-                    nnCtx.fillText(layer.label, layer.x, h - 5);
+                    nnCtx.fillStyle = '#a0a0c0'; nnCtx.font = '8px "Segoe UI"'; nnCtx.textAlign = 'center';
+                    nnCtx.fillText(layer.label, layer.x, h-5);
                 });
                 if (currentActionIndex >= 0) {
                     const outLayer = layers[3];
-                    const y = centerY - (outLayer.count * spacingY) / 2 + currentActionIndex * spacingY + spacingY / 2;
-                    nnCtx.shadowColor = '#ff4d8c';
-                    nnCtx.shadowBlur = 10;
+                    const y = centerY - (outLayer.count*spacingY)/2 + currentActionIndex*spacingY + spacingY/2;
+                    nnCtx.shadowColor = '#ff4d8c'; nnCtx.shadowBlur = 10;
                     nnCtx.fillStyle = '#ff4d8c';
                     nnCtx.beginPath();
-                    nnCtx.moveTo(outLayer.x + 25, y - 6);
-                    nnCtx.lineTo(outLayer.x + 37, y);
-                    nnCtx.lineTo(outLayer.x + 25, y + 6);
+                    nnCtx.moveTo(outLayer.x+25, y-6); nnCtx.lineTo(outLayer.x+37, y); nnCtx.lineTo(outLayer.x+25, y+6);
                     nnCtx.fill();
                 }
                 nnCtx.shadowBlur = 0;
             }
 
             function updateDashboard() {
+                if (!episodeNumEl || !totalRewardEl || !lossValueEl || !successRateEl || !stepCountEl) return;
                 episodeNumEl.textContent = episodeCount;
                 totalRewardEl.textContent = totalRewardAccum.toFixed(2);
                 lossValueEl.textContent = lastLoss !== null ? lastLoss.toFixed(4) : '---';
-                successRateEl.textContent = episodeCount > 0 ? ((successCount / episodeCount) * 100).toFixed(1) + '%' :
-                '0.0%';
+                successRateEl.textContent = episodeCount > 0 ? ((successCount / episodeCount) * 100).toFixed(1) + '%' : '0.0%';
                 stepCountEl.textContent = currentSteps;
                 drawNNVisualizer();
             }
@@ -959,8 +864,8 @@
                 isRunning = false;
                 btnStartStop.textContent = '▶ ابدأ التدريب';
                 btnStartStop.classList.replace('danger', 'primary');
-                clearInterval(wallChangeTimer);
-                cancelAnimationFrame(animationId);
+                if (wallChangeTimer) { clearInterval(wallChangeTimer); wallChangeTimer = null; }
+                if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
             }
 
             async function resetAll() {
@@ -973,8 +878,7 @@
                 successCount = 0;
                 episodeBuffer = [];
                 currentActionIndex = -1;
-                currentActivations = { dense1: new Array(20).fill(0), dense2: new Array(10).fill(0), output: new Array(4).fill(
-                        0) };
+                currentActivations = { dense1: new Array(20).fill(0), dense2: new Array(10).fill(0), output: new Array(4).fill(0) };
                 model.dispose();
                 model = buildModel();
                 activationModels = createActivationModels();
@@ -989,10 +893,8 @@
             btnStartStop.addEventListener('click', () => isRunning ? stopTraining() : startTraining());
             btnReset.addEventListener('click', resetAll);
             btnSaveWeights.addEventListener('click', () => saveWeightsToDB(model));
-            btnLoadWeights.addEventListener('click', async () => { await loadWeightsFromDB(model);
-                updateDashboard(); });
-            btnClearDB.addEventListener('click', async () => { await clearDB();
-                updateDBStatus('loading', 'تم المسح'); });
+            btnLoadWeights.addEventListener('click', async () => { await loadWeightsFromDB(model); updateDashboard(); });
+            btnClearDB.addEventListener('click', async () => { await clearDB(); updateDBStatus('loading', 'تم المسح'); });
 
             // ==================== START ====================
             async function init() {
@@ -1003,8 +905,7 @@
                 updateDBStatus('loading', 'جاري التحقق...');
                 if (!await loadWeightsFromDB(model)) updateDBStatus('loading', 'نموذج جديد');
             }
-            init().catch(err => { console.error('Initialization error:', err);
-                updateDBStatus('error', 'خطأ في التهيئة'); });
+            init().catch(err => { console.error('Initialization error:', err); updateDBStatus('error', 'خطأ في التهيئة'); });
         })();
     </script>
 </body>
