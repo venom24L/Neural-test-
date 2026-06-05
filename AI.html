@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Maze Agent — Reinforcement Learning with TensorFlow.js</title>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #050816;
+    color: #e0e6ff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(0, 217, 255, 0.18) 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(255, 0, 110, 0.18) 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, rgba(0, 255, 136, 0.08) 0%, transparent 60%);
+    z-index: -2;
+    animation: bgPulse 15s ease-in-out infinite alternate;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 217, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 217, 255, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: -1;
+  }
+  @keyframes bgPulse {
+    0% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+    100% { transform: scale(1.3) rotate(15deg); opacity: 1; }
+  }
+  .app {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .app-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding: 20px;
+  }
+  .app-header h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, #00d9ff 0%, #ff006e 50%, #00ff88 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 200% 200%;
+    animation: gradientShift 5s ease infinite;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .app-header p {
+    color: #8892b0;
+    font-size: 0.95rem;
+    font-weight: 400;
+  }
+  .app-header .badges {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    background: rgba(0, 217, 255, 0.1);
+    border: 1px solid rgba(0, 217, 255, 0.3);
+    color: #00d9ff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge.pink {
+    background: rgba(255, 0, 110, 0.1);
+    border-color: rgba(255, 0, 110, 0.3);
+    color: #ff006e;
+  }
+  .badge.green {
+    background: rgba(0, 255, 136, 0.1);
+    border-color: rgba(0, 255, 136, 0.3);
+    color: #00ff88;
+  }
+  .main-content {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    align-items: start;
+  }
+  .panel {
+    background: rgba(20, 25, 40, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 217, 255, 0.18);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.15);
+  }
+  .panel-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #00d9ff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 255, 136, 0.12);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    color: #00ff88;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .status-pill.paused {
+    background: rgba(255, 170, 0, 0.12);
+    border-color: rgba(255, 170, 0, 0.3);
+    color: #ffaa00;
+  }
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 8px currentColor;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+  .canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  #mazeCanvas {
+    border: 2px solid rgba(0, 217, 255, 0.25);
+    border-radius: 12px;
+    background: #0a0e1a;
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 0 40px rgba(0, 217, 255, 0.15);
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 10px;
+    background: rgba(10, 14, 26, 0.5);
+    border-radius: 10px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: #b0b8d0;
+  }
+  .legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 12px;
+    background: rgba(10, 14, 26, 0.5);
+    border-radius: 10px;
+  }
+  .btn {
+    background: linear-gradient(135deg, #00d9ff, #0099cc);
+    color: #050816;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.88rem;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 217, 255, 0.4); }
+  .btn:active { transform: translateY(0); }
+  .btn.pink { background: linear-gradient(135deg, #ff006e, #cc0055); color: #fff; }
+  .btn.pink:hover { box-shadow: 0 6px 16px rgba(255, 0, 110, 0.4); }
+  .btn.orange { background: linear-gradient(135deg, #ff8c00, #cc6600); color: #fff; }
+  .btn.orange:hover { box-shadow: 0 6px 16px rgba(255, 140, 0, 0.4); }
+  .btn.gray { background: linear-gradient(135deg, #4a5570, #2a3550); color: #e0e6ff; }
+  .btn.gray:hover { box-shadow: 0 6px 16px rgba(74, 85, 112, 0.4); }
+  .speed-control {
+    flex: 1;
+    min-width: 180px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #8892b0;
+    font-size: 0.85rem;
+  }
+  .speed-control input[type=range] {
+    flex: 1;
+    accent-color: #00d9ff;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: linear-gradient(135deg, rgba(10, 14, 26, 0.7), rgba(20, 25, 40, 0.5));
+    border: 1px solid rgba(0, 217, 255, 0.15);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.1), transparent);
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%, 100% { left: -100%; }
+    50% { left: 100%; }
+  }
+  .stat-card.pink { border-color: rgba(255, 0, 110, 0.25); }
+  .stat-card.green { border-color: rgba(0, 255, 136, 0.25); }
+  .stat-card.orange { border-color: rgba(255, 140, 0, 0.25); }
+  .stat-label {
+    color: #8892b0;
+    font-size: 0.7rem;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 600;
+  }
+  .stat-value {
+    color: #00d9ff;
+    font-size: 1.4rem;
+    font-weight: 800;
+    font-family: 'Courier New', monospace;
+    line-height: 1.1;
+  }
+  .stat-card.pink .stat-value { color: #ff006e; }
+  .stat-card.green .stat-value { color: #00ff88; }
+  .stat-card.orange .stat-value { color: #ff8c00; }
+  .stat-sub {
+    color: #6a7390;
+    font-size: 0.68rem;
+    margin-top: 2px;
+  }
+  .chart-card {
+    background: rgba(10, 14, 26, 0.6);
+    border: 1px solid rgba(0, 217, 255, 0.12);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  .chart-card h3 {
+    color: #8892b0;
+    font-size: 0.78rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+  }
+  .chart-card canvas {
+    width: 100%;
+    height: 90px;
+    display: block;
+    border-radius: 6px;
+  }
+  .db-card {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.08), rgba(0, 217, 255, 0.05));
+    border: 1px solid rgba(0, 255, 136, 0.25);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .db-label {
+    color: #8892b0;
+    font-size: 0.72rem;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 600;
+  }
+  .db-value {
+    color: #00ff88;
+    font-weight: 700;
+    font-size: 0.95rem;
+    font-family: 'Courier New', monospace;
+  }
+  .architecture-info {
+    background: rgba(10, 14, 26, 0.6);
+    border: 1px solid rgba(0, 217, 255, 0.12);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 0.75rem;
+    color: #8892b0;
+  }
+  .architecture-info h3 {
+    color: #00d9ff;
+    font-size: 0.78rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .arch-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px dashed rgba(0, 217, 255, 0.1);
+  }
+  .arch-row:last-child { border-bottom: none; }
+  .arch-row span:first-child { color: #b0b8d0; }
+  .arch-row span:last-child { color: #00d9ff; font-family: 'Courier New', monospace; font-weight: 700; }
+  @media (max-width: 960px) {
+    .main-content { grid-template-columns: 1fr; }
+    .dashboard { order: 2; }
+  }
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .app { padding: 10px; }
+    .panel { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>🧠 AI Maze Agent</h1>
+    <p>Reinforcement Learning with TensorFlow.js — Deep Q-Network</p>
+    <div class="badges">
+      <span class="badge">TensorFlow.js</span>
+      <span class="badge pink">DQN</span>
+      <span class="badge green">IndexedDB Persistence</span>
+      <span class="badge">15 × 15 Dynamic Maze</span>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <section class="panel game-panel">
+      <div class="panel-header">
+        <h2>🎮 Game View</h2>
+        <div id="trainingPill" class="status-pill">
+          <span class="pulse-dot"></span>
+          <span id="trainingText">Training</span>
+        </div>
+      </div>
+
+      <div class="canvas-wrapper">
+        <canvas id="mazeCanvas" width="480" height="480"></canvas>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background:#1a2540;border:1px solid #2a3a5a"></div>Static Wall</div>
+        <div class="legend-item"><div class="legend-color" style="background:linear-gradient(135deg,#ff8c00,#ff6b00)"></div>Dynamic Wall</div>
+        <div class="legend-item"><div class="legend-color" style="background:#00ff88;box-shadow:0 0 8px #00ff88"></div>Agent</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ff006e;box-shadow:0 0 8px #ff006e"></div>Exit</div>
+        <div class="legend-item"><div class="legend-color" style="background:repeating-linear-gradient(45deg,#00d9ff,#00d9ff 2px,transparent 2px,transparent 4px)"></div>Sensor Ray</div>
+      </div>
+
+      <div class="controls">
+        <button id="pauseBtn" class="btn orange">⏸ Pause</button>
+        <button id="saveBtn" class="btn">💾 Save Now</button>
+        <button id="resetBtn" class="btn pink">🔄 Reset Model</button>
+        <div class="speed-control">
+          <span>Speed:</span>
+          <input type="range" id="speedSlider" min="0" max="100" value="70">
+          <span id="speedLabel" style="min-width:30px;text-align:right;color:#00d9ff;font-weight:700;">70%</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel dashboard">
+      <div class="panel-header">
+        <h2>📊 Dashboard</h2>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Episode</div>
+          <div class="stat-value" id="episode">0</div>
+          <div class="stat-sub">Current attempt</div>
+        </div>
+        <div class="stat-card pink">
+          <div class="stat-label">Total Reward</div>
+          <div class="stat-value" id="totalReward">0.00</div>
+          <div class="stat-sub">Cumulative</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Episode Reward</div>
+          <div class="stat-value" id="episodeReward">0.00</div>
+          <div class="stat-sub">This attempt</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">Loss (MSE)</div>
+          <div class="stat-value" id="loss">0.0000</div>
+          <div class="stat-sub">Last training step</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Epsilon (ε)</div>
+          <div class="stat-value" id="epsilon">100.0%</div>
+          <div class="stat-sub">Exploration rate</div>
+        </div>
+        <div class="stat-card pink">
+          <div class="stat-label">Steps</div>
+          <div class="stat-value" id="steps">0</div>
+          <div class="stat-sub">In current episode</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Best Reward</div>
+          <div class="stat-value" id="bestReward">—</div>
+          <div class="stat-sub">All-time best</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">Success Rate</div>
+          <div class="stat-value" id="successRate">0%</div>
+          <div class="stat-sub">Last 20 episodes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Replay Buffer</div>
+          <div class="stat-value" id="replaySize">0</div>
+          <div class="stat-sub">Stored transitions</div>
+        </div>
+        <div class="stat-card pink">
+          <div class="stat-label">Status</div>
+          <div class="stat-value" id="statusText" style="font-size:0.95rem;">Init</div>
+          <div class="stat-sub">State</div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3>
+          <span>📈 Reward History</span>
+          <span id="rewardAvg" style="color:#00ff88;">avg: —</span>
+        </h3>
+        <canvas id="rewardChart" width="320" height="90"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3>
+          <span>📉 Loss History</span>
+          <span id="lossAvg" style="color:#ff006e;">avg: —</span>
+        </h3>
+        <canvas id="lossChart" width="320" height="90"></canvas>
+      </div>
+
+      <div class="db-card">
+        <div class="db-label">💾 IndexedDB Status</div>
+        <div class="db-value" id="dbStatus">Initializing…</div>
+      </div>
+
+      <div class="architecture-info">
+        <h3>🧬 Neural Network</h3>
+        <div class="arch-row"><span>Input Layer</span><span>12 neurons</span></div>
+        <div class="arch-row"><span>Hidden 1 (ReLU)</span><span>500 neurons</span></div>
+        <div class="arch-row"><span>Dropout</span><span>20%</span></div>
+        <div class="arch-row"><span>Hidden 2 (ReLU)</span><span>10 neurons</span></div>
+        <div class="arch-row"><span>Output (Softmax)</span><span>4 actions</span></div>
+        <div class="arch-row"><span>Optimizer</span><span>Adam (lr=0.001)</span></div>
+        <div class="arch-row"><span>Loss</span><span>MeanSquaredError</span></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   AI MAZE AGENT - Reinforcement Learning with TensorFlow.js
+   Single file, ready for Vercel deployment
+   ============================================================ */
+
+/* ---------- Configuration ---------- */
+const CFG = {
+  GRID_SIZE: 15,
+  CELL_SIZE: 32,
+  MAX_STEPS: 250,
+  REPLAY_SIZE: 2000,
+  BATCH_SIZE: 32,
+  GAMMA: 0.95,
+  EPSILON_START: 1.0,
+  EPSILON_END: 0.05,
+  EPSILON_DECAY: 0.995,
+  LEARNING_RATE: 0.001,
+  TRAIN_FREQ: 4,
+  DYNAMIC_WALL_INTERVAL: 3000,
+  MODEL_NAME: 'ai-maze-rl-model-v1'
+};
+
+/* ---------- Global State ---------- */
+let model = null;
+let maze = new Set();
+let dynamicWallsActive = new Set();
+let agent = { x: 1, y: 1 };
+const EXIT = { x: 13, y: 13 };
+let epsilon = CFG.EPSILON_START;
+let episode = 0;
+let totalReward = 0;
+let bestReward = -Infinity;
+let episodeReward = 0;
+let steps = 0;
+let lastLoss = 0;
+let isTraining = true;
+let isPaused = false;
+let replayBuffer = [];
+let rewardHistory = [];
+let lossHistory = [];
+let successHistory = [];
+let dbStatus = 'Initializing…';
+let trainingStepDelay = 30;
+let lastSuccessSaved = -1;
+
+/* ---------- Dynamic Wall Positions ---------- */
+const DYNAMIC_POSITIONS = [
+  [3, 3], [3, 11], [7, 7], [11, 3], [11, 11],
+  [5, 9], [9, 5], [6, 6], [8, 9], [4, 7]
+];
+
+/* ---------- Static Maze Walls ---------- */
+function createMaze() {
+  const walls = new Set();
+  // Outer border
+  for (let i = 0; i < CFG.GRID_SIZE; i++) {
+    walls.add(`0,${i}`);
+    walls.add(`${CFG.GRID_SIZE - 1},${i}`);
+    walls.add(`${i},0`);
+    walls.add(`${i},${CFG.GRID_SIZE - 1}`);
+  }
+  // Internal static walls (designed to always leave a solvable path)
+  const staticWalls = [
+    [2,2],[2,3],[2,4],[2,5],
+    [4,4],[4,5],[4,6],
+    [6,2],[6,3],
+    [7,7],[7,8],[7,9],
+    [9,9],[9,10],
+    [10,4],[10,5],[10,6],
+    [12,8],[12,9],[12,10],
+    [3,10],[3,11],
+    [5,12],[6,12],
+    [8,3],[8,4],
+    [11,7],[11,8]
+  ];
+  staticWalls.forEach(([x, y]) => walls.add(`${x},${y}`));
+  return walls;
+}
+
+function isWall(x, y) {
+  if (x < 0 || x >= CFG.GRID_SIZE || y < 0 || y >= CFG.GRID_SIZE) return true;
+  if (maze.has(`${x},${y}`)) return true;
+  if (dynamicWallsActive.has(`${x},${y}`)) return true;
+  return false;
+}
+
+function toggleDynamicWalls() {
+  DYNAMIC_POSITIONS.forEach(pos => {
+    if (Math.random() < 0.4) {
+      const key = `${pos[0]},${pos[1]}`;
+      if (dynamicWallsActive.has(key)) dynamicWallsActive.delete(key);
+      else dynamicWallsActive.add(key);
+    }
+  });
+}
+
+/* ---------- Neural Network ---------- */
+function createModel() {
+  const m = tf.sequential();
+  m.add(tf.layers.dense({
+    inputShape: [12],
+    units: 500,
+    activation: 'relu',
+    kernelInitializer: 'heNormal'
+  }));
+  m.add(tf.layers.dropout({ rate: 0.2 }));
+  m.add(tf.layers.dense({
+    units: 10,
+    activation: 'relu',
+    kernelInitializer: 'heNormal'
+  }));
+  m.add(tf.layers.dense({
+    units: 4,
+    activation: 'softmax'
+  }));
+  m.compile({
+    optimizer: tf.train.adam(CFG.LEARNING_RATE),
+    loss: 'meanSquaredError'
+  });
+  return m;
+}
+
+/* ---------- State Representation (12 features) ----------
+   - 8 sensor readings (normalized distance to nearest wall in 8 directions)
+   - agent_x / GRID_SIZE
+   - agent_y / GRID_SIZE
+   - exit_x  / GRID_SIZE
+   - exit_y  / GRID_SIZE
+*/
+function castRay(x, y, angle) {
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+  const maxDist = CFG.GRID_SIZE * 1.4;
+  const step = 0.3;
+  for (let d = 0.15; d < maxDist; d += step) {
+    const cx = x + dx * d;
+    const cy = y + dy * d;
+    const gx = Math.round(cx);
+    const gy = Math.round(cy);
+    if (isWall(gx, gy)) {
+      return Math.min(d / CFG.GRID_SIZE, 1);
+    }
+  }
+  return 1;
+}
+
+function getState() {
+  // Angles: E, SE, S, SW, W, NW, N, NE
+  const angles = [
+    0,
+    Math.PI / 4,
+    Math.PI / 2,
+    3 * Math.PI / 4,
+    Math.PI,
+    5 * Math.PI / 4,
+    3 * Math.PI / 2,
+    7 * Math.PI / 4
+  ];
+  const sensors = angles.map(a => castRay(agent.x, agent.y, a));
+  return [
+    ...sensors,
+    agent.x / CFG.GRID_SIZE,
+    agent.y / CFG.GRID_SIZE,
+    EXIT.x / CFG.GRID_SIZE,
+    EXIT.y / CFG.GRID_SIZE
+  ];
+}
+
+/* ---------- Action Selection (Epsilon-Greedy) ---------- */
+async function selectAction(state) {
+  if (Math.random() < epsilon) {
+    return Math.floor(Math.random() * 4);
+  }
+  return tf.tidy(() => {
+    const stateTensor = tf.tensor2d([state]);
+    const prediction = model.predict(stateTensor);
+    return prediction.argMax(1).data().then(arr => arr[0]);
+  });
+}
+
+/* ---------- Environment Step ---------- */
+function doStep(action) {
+  const oldDist = Math.abs(agent.x - EXIT.x) + Math.abs(agent.y - EXIT.y);
+
+  // 0 = up (-y), 1 = down (+y), 2 = left (-x), 3 = right (+x)
+  let newX = agent.x;
+  let newY = agent.y;
+  if (action === 0) newY--;
+  else if (action === 1) newY++;
+  else if (action === 2) newX--;
+  else if (action === 3) newX++;
+
+  let reward = -0.005;   // small step penalty
+  let done = false;
+
+  if (isWall(newX, newY)) {
+    reward = -0.05;     // hitting a wall is worse
+  } else {
+    agent.x = newX;
+    agent.y = newY;
+  }
+
+  if (agent.x === EXIT.x && agent.y === EXIT.y) {
+    reward = 1.0;        // big positive on reaching exit
+    done = true;
+  } else {
+    const newDist = Math.abs(agent.x - EXIT.x) + Math.abs(agent.y - EXIT.y);
+    if (newDist < oldDist) reward += 0.02;     // small shaping bonus
+    else if (newDist > oldDist) reward -= 0.01;
+  }
+
+  steps++;
+  if (steps >= CFG.MAX_STEPS && !done) {
+    done = true;
+    reward = -0.2;       // timeout penalty
+  }
+
+  return { reward, done };
+}
+
+function addToReplay(state, action, reward, nextState, done) {
+  replayBuffer.push({ state, action, reward, nextState, done });
+  if (replayBuffer.length > CFG.REPLAY_SIZE) replayBuffer.shift();
+}
+
+function sampleBatch() {
+  const batch = [];
+  for (let i = 0; i < CFG.BATCH_SIZE; i++) {
+    batch.push(replayBuffer[Math.floor(Math.random() * replayBuffer.length)]);
+  }
+  return batch;
+}
+
+/* ---------- Training Step (Deep Q-Learning) ---------- */
+async function trainOnBatch() {
+  if (replayBuffer.length < CFG.BATCH_SIZE) return null;
+
+  const batch = sampleBatch();
+  const states = batch.map(b => b.state);
+  const nextStates = batch.map(b => b.nextState);
+  const actions = batch.map(b => b.action);
+  const rewards = batch.map(b => b.reward);
+  const dones = batch.map(b => b.done);
+
+  const stateTensor = tf.tensor2d(states);
+  const nextStateTensor = tf.tensor2d(nextStates);
+
+  const currentQ = model.predict(stateTensor);
+  const nextQ = model.predict(nextStateTensor);
+  const currentQData = await currentQ.data();
+  const nextQData = await nextQ.data();
+
+  const targets = new Array(CFG.BATCH_SIZE);
+  for (let i = 0; i < CFG.BATCH_SIZE; i++) {
+    const t = [
+      currentQData[i * 4 + 0],
+      currentQData[i * 4 + 1],
+      currentQData[i * 4 + 2],
+      currentQData[i * 4 + 3]
+    ];
+    if (dones[i]) {
+      t[actions[i]] = rewards[i];
+    } else {
+      let maxNext = -Infinity;
+      for (let a = 0; a < 4; a++) {
+        const v = nextQData[i * 4 + a];
+        if (v > maxNext) maxNext = v;
+      }
+      t[actions[i]] = rewards[i] + CFG.GAMMA * maxNext;
+    }
+    targets[i] = t;
+  }
+
+  const targetTensor = tf.tensor2d(targets);
+  const history = await model.fit(stateTensor, targetTensor, {
+    epochs: 1,
+    verbose: 0,
+    batchSize: CFG.BATCH_SIZE
+  });
+  const loss = history.history.loss[0];
+
+  stateTensor.dispose();
+  nextStateTensor.dispose();
+  currentQ.dispose();
+  nextQ.dispose();
+  targetTensor.dispose();
+
+  return loss;
+}
+
+/* ---------- Episode Runner ---------- */
+async function runEpisode() {
+  episode++;
+  episodeReward = 0;
+  steps = 0;
+  agent = { x: 1, y: 1 };
+
+  let done = false;
+  let lastTrainStep = 0;
+
+  while (!done) {
+    if (isPaused) {
+      await new Promise(r => setTimeout(r, 100));
+      continue;
+    }
+    const state = getState();
+    const action = await selectAction(state);
+    const { reward, done: stepDone } = doStep(action);
+    const nextState = getState();
+    addToReplay(state, action, reward, nextState, stepDone);
+    episodeReward += reward;
+    done = stepDone;
+
+    // Train periodically
+    if (replayBuffer.length >= CFG.BATCH_SIZE && steps - lastTrainStep >= CFG.TRAIN_FREQ) {
+      const loss = await trainOnBatch();
+      if (loss !== null) lastLoss = loss;
+      lastTrainStep = steps;
+    }
+
+    if (trainingStepDelay > 0) {
+      await new Promise(r => setTimeout(r, trainingStepDelay));
+    }
+  }
+
+  // Episode complete
+  totalReward += episodeReward;
+  if (episodeReward > bestReward) bestReward = episodeReward;
+  rewardHistory.push(episodeReward);
+  if (rewardHistory.length > 50) rewardHistory.shift();
+  lossHistory.push(lastLoss);
+  if (lossHistory.length > 50) lossHistory.shift();
+
+  const success = (agent.x === EXIT.x && agent.y === EXIT.y);
+  successHistory.push(success ? 1 : 0);
+  if (successHistory.length > 20) successHistory.shift();
+
+  // Decay exploration
+  epsilon = Math.max(CFG.EPSILON_END, epsilon * CFG.EPSILON_DECAY);
+
+  // Force dashboard refresh after each episode
+  lastDashUpdate = 0;
+  updateDashboard();
+
+  // Save on success (and not the very first save flood)
+  if (success && (episode - lastSuccessSaved) >= 1) {
+    lastSuccessSaved = episode;
+    saveModel();
+  }
+}
+
+async function trainingLoop() {
+  while (isTraining) {
+    try {
+      await runEpisode();
+    } catch (err) {
+      console.error('Episode error:', err);
+      await new Promise(r => setTimeout(r, 200));
+    }
+  }
+}
+
+/* ---------- IndexedDB Persistence ---------- */
+async function saveModel() {
+  try {
+    dbStatus = '💾 Saving…';
+    updateDashboard();
+    if (model) {
+      await model.save(`indexeddb://${CFG.MODEL_NAME}`);
+      dbStatus = '✅ Saved to IndexedDB';
+    }
+  } catch (e) {
+    dbStatus = '❌ Save error';
+    console.error(e);
+  }
+  updateDashboard();
+}
+
+async function loadModel() {
+  try {
+    dbStatus = '📂 Loading from IndexedDB…';
+    updateDashboard();
+    const loaded = await tf.loadLayersModel(`indexeddb://${CFG.MODEL_NAME}`);
+    loaded.compile({
+      optimizer: tf.train.adam(CFG.LEARNING_RATE),
+      loss: 'meanSquaredError'
+    });
+    if (model) model.dispose();
+    model = loaded;
+    dbStatus = '✅ Loaded from IndexedDB';
+  } catch (e) {
+    dbStatus = '🆕 New model (no saved weights)';
+  }
+  updateDashboard();
+}
+
+async function resetModel() {
+  try {
+    await tf.io.removeModel(`indexeddb://${CFG.MODEL_NAME}`);
+  } catch (e) { /* ignore */ }
+  if (model) model.dispose();
+  model = createModel();
+  replayBuffer = [];
+  rewardHistory = [];
+  lossHistory = [];
+  successHistory = [];
+  episode = 0;
+  totalReward = 0;
+  bestReward = -Infinity;
+  epsilon = CFG.EPSILON_START;
+  lastLoss = 0;
+  dbStatus = '🔄 Model reset';
+  updateDashboard();
+}
+
+/* ---------- Rendering ---------- */
+const canvas = document.getElementById('mazeCanvas');
+const ctx = canvas.getContext('2d');
+const CS = CFG.CELL_SIZE;
+const SIZE = CFG.GRID_SIZE * CS;
+
+function drawCell(x, y, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x * CS, y * CS, CS, CS);
+}
+
+function render() {
+  // Background
+  ctx.fillStyle = '#0a0e1a';
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Cells
+  for (let x = 0; x < CFG.GRID_SIZE; x++) {
+    for (let y = 0; y < CFG.GRID_SIZE; y++) {
+      const px = x * CS, py = y * CS;
+      if (maze.has(`${x},${y}`)) {
+        // Static wall
+        const grad = ctx.createLinearGradient(px, py, px + CS, py + CS);
+        grad.addColorStop(0, '#1f2a44');
+        grad.addColorStop(1, '#141a2e');
+        ctx.fillStyle = grad;
+        ctx.fillRect(px, py, CS, CS);
+        ctx.strokeStyle = '#2e3a5e';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px + 0.5, py + 0.5, CS - 1, CS - 1);
+      } else if (dynamicWallsActive.has(`${x},${y}`)) {
+        // Dynamic wall — pulses
+        const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 250);
+        const grad = ctx.createLinearGradient(px, py, px + CS, py + CS);
+        grad.addColorStop(0, `rgba(255, 140, 0, ${pulse})`);
+        grad.addColorStop(1, `rgba(255, 100, 0, ${pulse * 0.8})`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(px, py, CS, CS);
+        ctx.strokeStyle = '#ffaa44';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px + 1, py + 1, CS - 2, CS - 2);
+        // Inner mark
+        ctx.fillStyle = 'rgba(255, 220, 150, 0.4)';
+        ctx.fillRect(px + CS/2 - 2, py + CS/2 - 2, 4, 4);
+      } else {
+        // Open path
+        ctx.fillStyle = '#0a0e1a';
+        ctx.fillRect(px, py, CS, CS);
+        ctx.strokeStyle = 'rgba(46, 58, 94, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px + 0.5, py + 0.5, CS - 1, CS - 1);
+      }
+    }
+  }
+
+  // Start marker
+  ctx.fillStyle = 'rgba(0, 217, 255, 0.18)';
+  ctx.fillRect(CS, CS, CS, CS);
+  ctx.strokeStyle = 'rgba(0, 217, 255, 0.6)';
+  ctx.setLineDash([3, 3]);
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(CS + 2, CS + 2, CS - 4, CS - 4);
+  ctx.setLineDash([]);
+
+  // Exit glow + emoji
+  const ex = EXIT.x * CS, ey = EXIT.y * CS;
+  const exitGlow = ctx.createRadialGradient(
+    ex + CS / 2, ey + CS / 2, 0,
+    ex + CS / 2, ey + CS / 2, CS * 2
+  );
+  exitGlow.addColorStop(0, 'rgba(255, 0, 110, 0.55)');
+  exitGlow.addColorStop(1, 'rgba(255, 0, 110, 0)');
+  ctx.fillStyle = exitGlow;
+  ctx.fillRect(ex - CS, ey - CS, CS * 3, CS * 3);
+
+  ctx.fillStyle = '#ff006e';
+  ctx.font = 'bold 22px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🚪', ex + CS / 2, ey + CS / 2);
+
+  // Sensor rays
+  const angles = [
+    0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4,
+    Math.PI, 5 * Math.PI / 4, 3 * Math.PI / 2, 7 * Math.PI / 4
+  ];
+  const startX = agent.x * CS + CS / 2;
+  const startY = agent.y * CS + CS / 2;
+  angles.forEach((angle, i) => {
+    const dist = castRay(agent.x, agent.y, angle) * CFG.GRID_SIZE;
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    const endX = startX + dx * dist * CS;
+    const endY = startY + dy * dist * CS;
+    ctx.strokeStyle = `rgba(0, 217, 255, ${0.45 - i * 0.035})`;
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = `rgba(0, 217, 255, 0.7)`;
+    ctx.beginPath();
+    ctx.arc(endX, endY, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Agent glow
+  const ax = agent.x * CS, ay = agent.y * CS;
+  const aglow = ctx.createRadialGradient(
+    ax + CS / 2, ay + CS / 2, 0,
+    ax + CS / 2, ay + CS / 2, CS * 1.6
+  );
+  aglow.addColorStop(0, 'rgba(0, 255, 136, 0.55)');
+  aglow.addColorStop(1, 'rgba(0, 255, 136, 0)');
+  ctx.fillStyle = aglow;
+  ctx.fillRect(ax - CS, ay - CS, CS * 3, CS * 3);
+
+  // Agent body
+  ctx.fillStyle = '#00ff88';
+  ctx.shadowColor = '#00ff88';
+  ctx.shadowBlur = 18;
+  ctx.beginPath();
+  ctx.arc(ax + CS / 2, ay + CS / 2, CS / 2.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Agent core
+  ctx.fillStyle = '#050816';
+  ctx.beginPath();
+  ctx.arc(ax + CS / 2, ay + CS / 2, CS / 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Agent highlight
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.beginPath();
+  ctx.arc(ax + CS / 2 - 3, ay + CS / 2 - 3, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Update dashboard every frame (throttled inside)
+  updateDashboard();
+  requestAnimationFrame(render);
+}
+
+/* ---------- Dashboard ---------- */
+let lastDashUpdate = 0;
+function updateDashboard() {
+  const now = Date.now();
+  if (now - lastDashUpdate < 50) return;
+  lastDashUpdate = now;
+
+  document.getElementById('episode').textContent = episode;
+  document.getElementById('totalReward').textContent = totalReward.toFixed(2);
+  document.getElementById('episodeReward').textContent = episodeReward.toFixed(2);
+  document.getElementById('loss').textContent = lastLoss ? lastLoss.toFixed(4) : '0.0000';
+  document.getElementById('epsilon').textContent = (epsilon * 100).toFixed(1) + '%';
+  document.getElementById('steps').textContent = steps;
+  document.getElementById('replaySize').textContent = `${replayBuffer.length}/${CFG.REPLAY_SIZE}`;
+  document.getElementById('bestReward').textContent =
+    bestReward === -Infinity ? '—' : bestReward.toFixed(2);
+  document.getElementById('dbStatus').textContent = dbStatus;
+
+  const sr = successHistory.length > 0
+    ? (successHistory.reduce((a, b) => a + b, 0) / successHistory.length * 100).toFixed(0) + '%'
+    : '0%';
+  document.getElementById('successRate').textContent = sr;
+
+  const statusText = isPaused ? '⏸ Paused' : (episode === 0 ? 'Init' : '▶ Running');
+  document.getElementById('statusText').textContent = statusText;
+  const pill = document.getElementById('trainingPill');
+  pill.classList.toggle('paused', isPaused);
+  document.getElementById('trainingText').textContent = isPaused ? 'Paused' : 'Training';
+
+  // Averages
+  if (rewardHistory.length > 0) {
+    const avg = rewardHistory.reduce((a, b) => a + b, 0) / rewardHistory.length;
+    document.getElementById('rewardAvg').textContent = `avg: ${avg.toFixed(2)}`;
+  }
+  if (lossHistory.length > 0) {
+    const valid = lossHistory.filter(v => v > 0);
+    if (valid.length > 0) {
+      const avg = valid.reduce((a, b) => a + b, 0) / valid.length;
+      document.getElementById('lossAvg').textContent = `avg: ${avg.toFixed(4)}`;
+    }
+  }
+
+  drawChart('rewardChart', rewardHistory, '#00ff88', -0.5, 1.2);
+  drawChart('lossChart', lossHistory.filter(v => v > 0), '#ff006e', 0, null);
+}
+
+function drawChart(canvasId, data, color, fixedMin, fixedMax) {
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const c = cv.getContext('2d');
+  const w = cv.width, h = cv.height;
+
+  c.fillStyle = 'rgba(5, 8, 22, 0.85)';
+  c.fillRect(0, 0, w, h);
+
+  // grid
+  c.strokeStyle = 'rgba(46, 58, 94, 0.35)';
+  c.lineWidth = 1;
+  for (let i = 1; i < 4; i++) {
+    const y = (h / 4) * i;
+    c.beginPath();
+    c.moveTo(0, y);
+    c.lineTo(w, y);
+    c.stroke();
+  }
+
+  if (data.length < 2) {
+    c.fillStyle = '#4a5570';
+    c.font = '11px Segoe UI';
+    c.textAlign = 'center';
+    c.fillText('Collecting data…', w / 2, h / 2);
+    return;
+  }
+
+  let dMin = fixedMin !== null ? fixedMin : Math.min(...data);
+  let dMax = fixedMax !== null ? fixedMax : Math.max(...data);
+  if (dMax === dMin) dMax = dMin + 1;
+
+  // zero line
+  if (dMin < 0 && dMax > 0) {
+    const zy = h - ((0 - dMin) / (dMax - dMin)) * h;
+    c.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    c.setLineDash([4, 4]);
+    c.beginPath();
+    c.moveTo(0, zy);
+    c.lineTo(w, zy);
+    c.stroke();
+    c.setLineDash([]);
+  }
+
+  // line
+  c.strokeStyle = color;
+  c.lineWidth = 2;
+  c.lineJoin = 'round';
+  c.beginPath();
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((v - dMin) / (dMax - dMin)) * h;
+    if (i === 0) c.moveTo(x, y);
+    else c.lineTo(x, y);
+  });
+  c.stroke();
+
+  // fill
+  const fillColor = color === '#00ff88' ? 'rgba(0, 255, 136, 0.12)' : 'rgba(255, 0, 110, 0.12)';
+  c.fillStyle = fillColor;
+  c.lineTo(w, h);
+  c.lineTo(0, h);
+  c.closePath();
+  c.fill();
+
+  // last point dot
+  const lx = w;
+  const ly = h - ((data[data.length - 1] - dMin) / (dMax - dMin)) * h;
+  c.fillStyle = color;
+  c.shadowColor = color;
+  c.shadowBlur = 6;
+  c.beginPath();
+  c.arc(lx - 2, ly, 3, 0, Math.PI * 2);
+  c.fill();
+  c.shadowBlur = 0;
+}
+
+/* ---------- Button Handlers ---------- */
+document.getElementById('pauseBtn').addEventListener('click', () => {
+  isPaused = !isPaused;
+  document.getElementById('pauseBtn').textContent = isPaused ? '▶ Resume' : '⏸ Pause';
+  updateDashboard();
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  saveModel();
+});
+
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  if (confirm('Reset model and clear all saved weights?')) {
+    await resetModel();
+  }
+});
+
+document.getElementById('speedSlider').addEventListener('input', (e) => {
+  const v = parseInt(e.target.value, 10);
+  trainingStepDelay = Math.max(0, 100 - v);
+  document.getElementById('speedLabel').textContent = v + '%';
+});
+
+/* ---------- Initialization ---------- */
+async function init() {
+  maze = createMaze();
+
+  // Seed a few dynamic walls as active
+  DYNAMIC_POSITIONS.slice(0, 4).forEach(([x, y]) => dynamicWallsActive.add(`${x},${y}`));
+
+  // Create fresh model
+  model = createModel();
+
+  // Try to load saved weights from IndexedDB
+  await loadModel();
+
+  // Dynamic wall toggler
+  setInterval(toggleDynamicWalls, CFG.DYNAMIC_WALL_INTERVAL);
+
+  // Backup dashboard updater (in case render loop stalls)
+  setInterval(updateDashboard, 150);
+
+  // Start render loop
+  requestAnimationFrame(render);
+
+  // Start training loop
+  trainingLoop();
+
+  // Initial dashboard
+  updateDashboard();
+}
+
+// Kick off
+init();
+</script>
+</body>
+</html>
